@@ -1,0 +1,13 @@
+[run]
+omit = 
+    */tests/*
+concurrency = multiprocessing
+parallel = True
+
+[paths]
+source = 
+    smpmgr/
+
+[report]
+fail_under = 0
+show_missing = True

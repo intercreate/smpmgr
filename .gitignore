@@ -1,0 +1,12 @@
+.venv
+__pycache__
+.coverage
+.mypy_cache
+.pytest_cache
+dist
+
+# test images
+*.bin
+
+# mcumgr-client
+mcumgr-client*
