@@ -1,37 +1,40 @@
 import asyncio
+from typing import cast
 
 import typer
 from rich import print
-from smpclient import SMPClient
 from smpclient.requests.os_management import EchoWrite, ResetWrite
-from smpclient.transport.serial import SMPSerialTransport
 
-from smpmgr import const
+from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
 
 app = typer.Typer(name="os", help="The SMP OS Management Group.")
 
 
 @app.command()
-def echo(address: str, message: str) -> None:
+def echo(ctx: typer.Context, message: str) -> None:
     """Request that the SMP Server echo the given message."""
-    s = SMPClient(SMPSerialTransport(), address)
+
+    options = cast(Options, ctx.obj)
+    smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await s.connect()
-        r = await s.request(EchoWrite(d=message))  # type: ignore
+        await connect_with_spinner(smpclient)
+        r = await smp_request(smpclient, options, EchoWrite(d=message))  # type: ignore
         print(r)
 
     asyncio.run(f())
 
 
 @app.command()
-def reset(address: const.Address) -> None:
+def reset(ctx: typer.Context) -> None:
     """Request that the SMP Server reset the device."""
-    s = SMPClient(SMPSerialTransport(), address)
+
+    options = cast(Options, ctx.obj)
+    smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await s.connect()
-        r = await s.request(ResetWrite())  # type: ignore
+        await connect_with_spinner(smpclient)
+        r = await smp_request(smpclient, options, ResetWrite())  # type: ignore
         print(r)
 
     asyncio.run(f())
