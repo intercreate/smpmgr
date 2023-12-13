@@ -1,6 +1,9 @@
 """The image subcommand group."""
 
 import asyncio
+from io import BufferedReader
+from pathlib import Path
+from typing import cast
 
 import typer
 from rich import print
@@ -8,46 +11,33 @@ from rich.progress import (
     BarColumn,
     DownloadColumn,
     Progress,
-    SpinnerColumn,
     TextColumn,
     TimeRemainingColumn,
     TransferSpeedColumn,
 )
+from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import error, success
+from smpclient.mcuboot import ImageInfo
 from smpclient.requests.image_management import ImageStatesRead
-from smpclient.transport.serial import SMPSerialTransport
 from typing_extensions import Annotated
 
-from smpmgr import const
-from smpmgr.common import connect_with_spinner
+from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
 
 app = typer.Typer(name="image", help="The SMP Image Management Group.")
 
 
 @app.command()
-def state_read(address: const.Address) -> None:
+def state_read(ctx: typer.Context) -> None:
     """Request to read the state of FW images on the SMP Server."""
 
-    smpclient = SMPClient(SMPSerialTransport(), address)
+    options = cast(Options, ctx.obj)
+    smpclient = get_smpclient(options)
 
     async def f() -> None:
-        if await connect_with_spinner(smpclient) is False:
-            print("Timeout")
-            return
+        await connect_with_spinner(smpclient)
 
-        with Progress(
-            SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True
-        ) as progress:
-            progress.add_task(description="Requested image states...", total=None)
-
-            try:
-                r = await asyncio.wait_for(
-                    smpclient.request(ImageStatesRead()), timeout=const.CONNECT_TIMEOUT_S  # type: ignore # noqa
-                )
-            except asyncio.TimeoutError:
-                print("Timeout")
-                return
+        r = await smp_request(smpclient, options, ImageStatesRead(), "Waiting for image states...")  # type: ignore # noqa
 
         if error(r):
             print(r)
@@ -64,7 +54,9 @@ def state_read(address: const.Address) -> None:
     asyncio.run(f())
 
 
-async def upload_with_progress_bar(smpclient: SMPClient, file: typer.FileBinaryRead) -> None:
+async def upload_with_progress_bar(
+    smpclient: SMPClient, file: typer.FileBinaryRead | BufferedReader, slot: int = 0
+) -> None:
     """Animate a progress bar while uploading the FW image."""
 
     with Progress(
@@ -81,23 +73,34 @@ async def upload_with_progress_bar(smpclient: SMPClient, file: typer.FileBinaryR
         image = file.read()
         file.close()
         task = progress.add_task("Uploading", total=len(image), filename=file.name, start=True)
-        async for offset in smpclient.upload(image):
-            progress.update(task, completed=offset)
+        try:
+            async for offset in smpclient.upload(image, slot):
+                progress.update(task, completed=offset)
+        except SMPBadStartDelimiter:
+            progress.stop()
+            typer.echo("Got an unexpected response, is the device an SMP server?")
+            raise typer.Exit(code=1)
 
 
 @app.command()
 def upload(
-    address: const.Address,
-    file: Annotated[typer.FileBinaryRead, typer.Argument(help="Path to FW image")],
+    ctx: typer.Context,
+    file: Annotated[Path, typer.Argument(help="Path to FW image")],
+    slot: Annotated[int, typer.Option(help="The image slot to upload to")] = 0,
 ) -> None:
     """Upload a FW image."""
-    smpclient = SMPClient(SMPSerialTransport(), address)
+
+    try:
+        ImageInfo.load_file(str(file))
+    except Exception as e:
+        typer.echo(f"Inspection of FW image failed: {e}")
+        raise typer.Exit(code=1)
+
+    smpclient = get_smpclient(cast(Options, ctx.obj))
 
     async def f() -> None:
-        if await connect_with_spinner(smpclient) is False:
-            print("Timeout")
-            return
-
-        await upload_with_progress_bar(smpclient, file)
+        await connect_with_spinner(smpclient)
+        with open(file, "rb") as f:
+            await upload_with_progress_bar(smpclient, f, slot)
 
     asyncio.run(f())
