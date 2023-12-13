@@ -737,13 +737,13 @@ pydantic = ">=2.4.2,<3.0.0"
 
 [[package]]
 name = "smpclient"
-version = "0.4.0"
+version = "0.4.1"
 description = "Simple Management Protocol (SMP) Client for remotely managing MCU firmware"
 optional = false
 python-versions = ">=3.10,<3.13"
 files = [
-    {file = "smpclient-0.4.0-py3-none-any.whl", hash = "sha256:3d646d4b131a9a4132b1130e0cae3f4a943dfb753324f950f58c082369ffa66e"},
-    {file = "smpclient-0.4.0.tar.gz", hash = "sha256:0d15bf0b8168a4592e27bebca95bee10d10edf4c717a253ca4ba94bbaaeded0c"},
+    {file = "smpclient-0.4.1-py3-none-any.whl", hash = "sha256:2fae3d85b9396214c010c5cb7ad946a2d5d25df4ff0617faa56e2bb03923fef3"},
+    {file = "smpclient-0.4.1.tar.gz", hash = "sha256:815aa23f805db61b3071b9ed104565a11172b573b6e9a6afa478176731d6adbe"},
 ]
 
 [package.dependencies]
@@ -800,4 +800,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "85cb690eb879dfcf8a886a31dc423826909470fdeeeea125eaac17cae12a7258"
+content-hash = "ba596bd1a2b2c85ee43254f5838800c030b46377d978c85edd219c2ec9766a25"
