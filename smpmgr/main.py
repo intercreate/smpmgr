@@ -1,17 +1,26 @@
 """Entry point for the `smpmgr` application."""
 
 import asyncio
+from pathlib import Path
 from typing import cast
 
 import typer
 from rich import print
 from smp.os_management import OS_MGMT_RET_RC
 from smpclient.generics import error, success
+from smpclient.mcuboot import IMAGE_TLV, ImageInfo, TLVNotFound
+from smpclient.requests.image_management import ImageStatesWrite
 from smpclient.requests.os_management import ResetWrite
 from typing_extensions import Annotated
 
 from smpmgr import image_management, os_management
-from smpmgr.common import Options, TransportDefinition, connect_with_spinner, get_smpclient
+from smpmgr.common import (
+    Options,
+    TransportDefinition,
+    connect_with_spinner,
+    get_smpclient,
+    smp_request,
+)
 from smpmgr.image_management import upload_with_progress_bar
 
 app = typer.Typer()
@@ -38,26 +47,61 @@ def options(
 @app.command()
 def upgrade(
     ctx: typer.Context,
-    file: Annotated[typer.FileBinaryRead, typer.Argument(help="Path to FW image")],
+    file: Annotated[Path, typer.Argument(help="Path to FW image")],
+    slot: Annotated[int, typer.Option(help="The image slot to upload to")] = 0,
 ) -> None:
     """Upload a FW image, mark it for next boot, and reset the device."""
 
-    smpclient = get_smpclient(cast(Options, ctx.obj))
+    try:
+        image_info = ImageInfo.load_file(str(file))
+    except Exception as e:
+        typer.echo(f"Inspection of FW image failed: {e}")
+        raise typer.Exit(code=1)
+
+    try:
+        image_tlv_sha256 = image_info.get_tlv(IMAGE_TLV.SHA256)
+    except TLVNotFound:
+        typer.echo("Could not find IMAGE_TLV_SHA256 in image.")
+        raise typer.Exit(code=1)
+
+    options = cast(Options, ctx.obj)
+    smpclient = get_smpclient(options)
 
     async def f() -> None:
         await connect_with_spinner(smpclient)
-        await upload_with_progress_bar(smpclient, file)
 
-        r = await smpclient.request(ResetWrite())  # type: ignore
+        with open(file, "rb") as f:
+            await upload_with_progress_bar(smpclient, f, slot)
+
+        if slot != 0:
+            # mark the new image for testing (swap)
+            r = await smp_request(
+                smpclient,
+                options,
+                ImageStatesWrite(hash=image_tlv_sha256.value),  # type: ignore
+                "Marking uploaded image for test upgrade...",
+            )  # type: ignore
+            if error(r):
+                print(r)
+                raise typer.Exit(code=1)
+            elif success(r):
+                pass
+            else:
+                raise Exception("Unreachable")
+
+        r = await smp_request(smpclient, options, ResetWrite())  # type: ignore
         if error(r):
             if r.rc != OS_MGMT_RET_RC.OK:
                 print(r)
-                return
+                typer.Exit(code=1)
         elif success(r):
             pass
         else:
             raise Exception("Unreachable")
 
-        print("Upgrade complete.  The device may take a few minutes to complete FW swap.")
+        print("Upgrade complete.")
+
+        if slot != 0:
+            print("The device may take a few minutes to complete FW swap.")
 
     asyncio.run(f())

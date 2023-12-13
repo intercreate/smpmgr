@@ -5,6 +5,7 @@ from dataclasses import dataclass, fields
 import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from serial import SerialException  # type: ignore
+from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import SMPRequest, TEr0, TEr1, TErr, TRep
 from smpclient.transport.serial import SMPSerialTransport
@@ -74,4 +75,8 @@ async def smp_request(
             return r
         except asyncio.TimeoutError:
             progress.update(task, description=f"{description} timeout", completed=True)
+            raise typer.Exit(code=1)
+        except SMPBadStartDelimiter:
+            progress.update(task, description=f"{description} SMP error", completed=True)
+            typer.echo("Is the device an SMP server?")
             raise typer.Exit(code=1)
