@@ -1,6 +1,7 @@
 """Entry point for the `smpmgr` application."""
 
 import asyncio
+import logging
 from pathlib import Path
 from typing import cast
 
@@ -22,6 +23,9 @@ from smpmgr.common import (
     smp_request,
 )
 from smpmgr.image_management import upload_with_progress_bar
+from smpmgr.logging import LogLevel, setup_logging
+
+logger = logging.getLogger(__name__)
 
 app = typer.Typer()
 app.add_typer(os_management.app)
@@ -37,8 +41,13 @@ def options(
     timeout: float = typer.Option(
         2.0, help="Transport timeout in seconds; how long to wait for requests"
     ),
+    loglevel: LogLevel = typer.Option(LogLevel.WARNING.value, help="Debug log level"),
+    logfile: Path = typer.Option(None, help="Log file path"),
 ) -> None:
+    setup_logging(loglevel, logfile)
+
     ctx.obj = Options(timeout=timeout, transport=TransportDefinition(port=port))
+    logger.info(ctx.obj)
 
     # TODO: type of transport is inferred from the argument given (--port, --ble, --usb, etc), but
     # it must be the case that only one is provided.
@@ -54,12 +63,14 @@ def upgrade(
 
     try:
         image_info = ImageInfo.load_file(str(file))
+        logger.info(str(image_info))
     except Exception as e:
         typer.echo(f"Inspection of FW image failed: {e}")
         raise typer.Exit(code=1)
 
     try:
         image_tlv_sha256 = image_info.get_tlv(IMAGE_TLV.SHA256)
+        logger.info(f"IMAGE_TLV_SHA256: {image_tlv_sha256}")
     except TLVNotFound:
         typer.echo("Could not find IMAGE_TLV_SHA256 in image.")
         raise typer.Exit(code=1)

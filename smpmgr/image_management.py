@@ -1,6 +1,7 @@
 """The image subcommand group."""
 
 import asyncio
+import logging
 from io import BufferedReader
 from pathlib import Path
 from typing import cast
@@ -25,6 +26,7 @@ from typing_extensions import Annotated
 from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
 
 app = typer.Typer(name="image", help="The SMP Image Management Group.")
+logger = logging.getLogger(__name__)
 
 
 @app.command()
@@ -76,9 +78,13 @@ async def upload_with_progress_bar(
         try:
             async for offset in smpclient.upload(image, slot):
                 progress.update(task, completed=offset)
+                logger.info(f"Upload {offset=}")
         except SMPBadStartDelimiter:
             progress.stop()
-            typer.echo("Got an unexpected response, is the device an SMP server?")
+            logger.error("Got an unexpected response, is the device an SMP server?")
+            raise typer.Exit(code=1)
+        except OSError as e:
+            logger.error(f"Connection to device lost: {e.__class__.__name__} - {e}")
             raise typer.Exit(code=1)
 
 
@@ -91,9 +97,10 @@ def upload(
     """Upload a FW image."""
 
     try:
-        ImageInfo.load_file(str(file))
-    except Exception as e:
-        typer.echo(f"Inspection of FW image failed: {e}")
+        image_info = ImageInfo.load_file(str(file))
+        logger.info(str(image_info))
+    except Exception:
+        logger.exception("Inspection of FW image failed")
         raise typer.Exit(code=1)
 
     smpclient = get_smpclient(cast(Options, ctx.obj))
