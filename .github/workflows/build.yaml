@@ -1,0 +1,41 @@
+name: Build
+permissions:
+  contents: write
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build executable 🔨
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - run: git fetch --prune --unshallow --tags
+
+    - run: pipx install poetry
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.12"
+        cache: 'poetry'
+
+    - if: matrix.os == 'ubuntu-latest'
+      run: shopt -s expand_aliases
+        
+    - name: Build with pyinstaller
+      run: |
+        . ./envr.ps1
+        build
+
