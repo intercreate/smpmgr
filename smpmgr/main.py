@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from importlib.metadata import version
 from pathlib import Path
 from typing import cast
 
@@ -51,6 +52,11 @@ def options(
 
     # TODO: type of transport is inferred from the argument given (--port, --ble, --usb, etc), but
     # it must be the case that only one is provided.
+
+
+options.__doc__ = f"""
+Simple Management Protocol (SMP) Manager Version {version(__package__)}
+"""
 
 
 @app.command()
