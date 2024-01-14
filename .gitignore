@@ -10,3 +10,8 @@ dist
 
 # mcumgr-client
 mcumgr-client*
+
+# pyinstaller
+build
+dist
+*.spec
