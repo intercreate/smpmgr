@@ -9,4 +9,4 @@ PYTHON_VENV=.venv
 [ALIASES]
 lint=black --check . && isort --check-only . && flake8 . && mypy .
 test=coverage erase && pytest --cov --maxfail=1 -n auto
-build=pyinstaller smpmgr/__main__.py --onefile --name smpmgr --collect-submodules shellingham
+build=python build.py $(git describe --tags)
