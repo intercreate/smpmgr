@@ -21,7 +21,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - run: git fetch --prune --unshallow --tags
+    - run: |
+        git fetch --prune --unshallow --tags
+        git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
 
     - run: pipx install poetry
 
