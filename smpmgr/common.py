@@ -1,4 +1,5 @@
 """Common CLI helpers from rich, typer, click, etc."""
+
 import asyncio
 import logging
 from dataclasses import dataclass, fields
@@ -23,6 +24,7 @@ class TransportDefinition:
 class Options:
     timeout: float
     transport: TransportDefinition
+    mtu: int
 
 
 def get_smpclient(options: Options) -> SMPClient:
@@ -31,11 +33,11 @@ def get_smpclient(options: Options) -> SMPClient:
         logger.info(
             f"Initializing SMPClient with the SMPSerialTransport, {options.transport.port=}"
         )
-        return SMPClient(SMPSerialTransport(), options.transport.port)
+        return SMPClient(SMPSerialTransport(mtu=options.mtu), options.transport.port)
     else:
         typer.echo(
             f"A transport option is required; "
-            f"one of [{', '.join(map(lambda x: '--' + x.name, fields(options)))}]."
+            f"one of [{', '.join(map(lambda x: '--' + x.name, fields(options.transport)))}]."
         )
         typer.echo("See smpmgr --help.")
         raise typer.Exit(code=1)

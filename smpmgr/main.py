@@ -41,12 +41,19 @@ def options(
     timeout: float = typer.Option(
         2.0, help="Transport timeout in seconds; how long to wait for requests"
     ),
+    mtu: int = typer.Option(
+        4096,
+        help=(
+            "Maximum transmission unit supported by the SMP server serial transport."
+            "  Ignored for BLE transport since the BLE connection will report MTU."
+        ),
+    ),
     loglevel: LogLevel = typer.Option(LogLevel.WARNING.value, help="Debug log level"),
     logfile: Path = typer.Option(None, help="Log file path"),
 ) -> None:
     setup_logging(loglevel, logfile)
 
-    ctx.obj = Options(timeout=timeout, transport=TransportDefinition(port=port))
+    ctx.obj = Options(timeout=timeout, transport=TransportDefinition(port=port), mtu=mtu)
     logger.info(ctx.obj)
 
     # TODO: type of transport is inferred from the argument given (--port, --ble, --usb, etc), but
