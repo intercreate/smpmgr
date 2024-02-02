@@ -1,18 +1,29 @@
 """Build a one-file executable of the application."""
 
-import argparse
+import os
 import shutil
 import subprocess
 import sys
 import traceback
 from pathlib import Path
+from typing import Final
 
-parser = argparse.ArgumentParser(description="Build a one-file executable of the application.")
-parser.add_argument("version", help="Use $(git describe --tags) to get the version.")
-args = parser.parse_args()
-version = args.version
+from git import Repo
 
-print(f"Building smpgmr {version}\n")
+git: Final = Repo(os.getcwd()).git
+git_hash: Final[str | None] = git.describe(dirty="+", always=True, exclude="*")
+if git_hash is None:
+    raise RuntimeError("Could not get git hash")
+if git_hash.endswith("+"):
+    raise RuntimeError("Uncommitted changes")
+
+git_tag: Final[str | None] = git.describe(dirty="+", always=True, tags=True)
+if git_tag is None:
+    raise RuntimeError("Could not get git tag")
+else:
+    version: Final[str] = git_tag
+
+print(f"Building smpgmr {version}, Git SHA {git_hash}\n")
 
 assert subprocess.run(["poetry", "self", "add", "poetry-version-plugin"]).returncode == 0
 
