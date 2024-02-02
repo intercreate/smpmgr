@@ -79,8 +79,9 @@ async def upload_with_progress_bar(
             async for offset in smpclient.upload(image, slot):
                 progress.update(task, completed=offset)
                 logger.info(f"Upload {offset=}")
-        except SMPBadStartDelimiter:
+        except SMPBadStartDelimiter as e:
             progress.stop()
+            logger.info(f"Bad start delimiter: {e}")
             logger.error("Got an unexpected response, is the device an SMP server?")
             raise typer.Exit(code=1)
         except OSError as e:
