@@ -1,4 +1,5 @@
 """Common CLI helpers from rich, typer, click, etc."""
+
 import asyncio
 import logging
 from dataclasses import dataclass, fields
@@ -35,7 +36,7 @@ def get_smpclient(options: Options) -> SMPClient:
     else:
         typer.echo(
             f"A transport option is required; "
-            f"one of [{', '.join(map(lambda x: '--' + x.name, fields(options)))}]."
+            f"one of [{', '.join(map(lambda x: '--' + x.name, fields(options.transport)))}]."
         )
         typer.echo("See smpmgr --help.")
         raise typer.Exit(code=1)
