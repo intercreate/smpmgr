@@ -24,6 +24,7 @@ class TransportDefinition:
 class Options:
     timeout: float
     transport: TransportDefinition
+    mtu: int
 
 
 def get_smpclient(options: Options) -> SMPClient:
@@ -32,7 +33,7 @@ def get_smpclient(options: Options) -> SMPClient:
         logger.info(
             f"Initializing SMPClient with the SMPSerialTransport, {options.transport.port=}"
         )
-        return SMPClient(SMPSerialTransport(), options.transport.port)
+        return SMPClient(SMPSerialTransport(mtu=options.mtu), options.transport.port)
     else:
         typer.echo(
             f"A transport option is required; "
