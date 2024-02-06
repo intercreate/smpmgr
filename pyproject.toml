@@ -38,7 +38,7 @@ gitpython = "^3.1.41"
 
 [tool.black]
 line-length = 100
-skip-string-normalization = 1
+skip-string-normalization = true
 
 [tool.isort]
 profile = "black"
@@ -47,7 +47,7 @@ multi_line_output = 3
 
 [tool.mypy]
 disallow_untyped_defs = true
-exclude = ['.venv']
+exclude = ['.venv', 'build', 'dist']
 
 [tool.pytest.ini_options]
 filterwarnings = [
