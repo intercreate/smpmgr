@@ -44,6 +44,11 @@ def setup_logging(loglevel: LogLevel | None, logfile: Path | None) -> None:
     NAME_CONSOLE_HANDLER = "console_handler"
     NAME_FILE_HANDLER = "file_handler"
 
+    base_console_handler = RichHandler(
+        rich_tracebacks=True, tracebacks_suppress=[click, typer, asyncio, serial]
+    )
+    base_console_handler.name = NAME_CONSOLE_HANDLER
+
     console_handler = (
         RichHandler(rich_tracebacks=True, tracebacks_suppress=[click, typer, asyncio, serial])
         if loglevel is not None
@@ -70,7 +75,7 @@ def setup_logging(loglevel: LogLevel | None, logfile: Path | None) -> None:
     old_handlers: Dict[str, logging.Handler] = {h.name: h for h in logging.root.handlers}  # type: ignore # noqa: E501
 
     # update the old handlers with the new handlers
-    handlers = old_handlers | new_handlers
+    handlers = {base_console_handler.name: base_console_handler} | old_handlers | new_handlers
 
     logging.basicConfig(
         level=logging.NOTSET,  # root logger logs everything
@@ -80,10 +85,10 @@ def setup_logging(loglevel: LogLevel | None, logfile: Path | None) -> None:
         force=True,
     )
 
-    if console_handler is not None:
-        assert loglevel is not None
-        console_handler.setLevel(loglevel.value)  # UI console log level set from --loglevel
-        logging.info(f"Console log level: {logging.getLevelName(console_handler.level)}")
+    handlers[NAME_CONSOLE_HANDLER].setLevel(
+        loglevel.value if loglevel is not None else logging.WARNING
+    )  # UI console log level set from --loglevel
+    logging.info(f"Console log level: {logging.getLevelName(handlers[NAME_CONSOLE_HANDLER].level)}")
 
     if file_handler is not None:
         file_handler.setLevel(logging.DEBUG)  # file logs are always DEBUG
