@@ -81,6 +81,7 @@ def setup_logging(loglevel: LogLevel | None, logfile: Path | None) -> None:
     )
 
     if console_handler is not None:
+        assert loglevel is not None
         console_handler.setLevel(loglevel.value)  # UI console log level set from --loglevel
         logging.info(f"Console log level: {logging.getLevelName(console_handler.level)}")
 
