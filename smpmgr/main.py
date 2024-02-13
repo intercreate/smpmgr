@@ -2,9 +2,9 @@
 
 import asyncio
 import logging
-from importlib.metadata import version
+from importlib.metadata import version as get_version
 from pathlib import Path
-from typing import cast
+from typing import Final, cast
 
 import typer
 from rich import print
@@ -28,12 +28,17 @@ from smpmgr.logging import LogLevel, setup_logging
 
 logger = logging.getLogger(__name__)
 
-app = typer.Typer()
+HELP_LINES: Final = (
+    f"Simple Management Protocol (SMP) Manager Version {get_version(__package__)}\n",
+    "Copyright (c) 2023-2024 Intercreate, Inc. and Contributors\n",
+)
+
+app: Final = typer.Typer(help="\n".join(HELP_LINES))
 app.add_typer(os_management.app)
 app.add_typer(image_management.app)
 
 
-@app.callback()
+@app.callback(invoke_without_command=True)
 def options(
     ctx: typer.Context,
     port: str = typer.Option(
@@ -49,21 +54,27 @@ def options(
             "  Ignored for BLE transport since the BLE connection will report MTU."
         ),
     ),
-    loglevel: LogLevel = typer.Option(LogLevel.WARNING.value, help="Debug log level"),
+    loglevel: LogLevel = typer.Option(None, help="Debug log level"),
     logfile: Path = typer.Option(None, help="Log file path"),
+    version: Annotated[bool, typer.Option("--version", help="Show the version and exit.")] = False,
 ) -> None:
+    if version:
+        print(get_version(__package__))
+        raise typer.Exit()
+
     setup_logging(loglevel, logfile)
 
     ctx.obj = Options(timeout=timeout, transport=TransportDefinition(port=port), mtu=mtu)
     logger.info(ctx.obj)
 
+    if ctx.invoked_subcommand is None:
+        if loglevel is not None or logfile is not None:
+            raise typer.Exit()
+        print("A command is required, see [bold]--help[/bold] for available commands.")
+        raise typer.Exit()
+
     # TODO: type of transport is inferred from the argument given (--port, --ble, --usb, etc), but
     # it must be the case that only one is provided.
-
-
-options.__doc__ = f"""
-Simple Management Protocol (SMP) Manager Version {version(__package__)}
-"""
 
 
 @app.command()
@@ -129,3 +140,25 @@ def upgrade(
             print("The device may take a few minutes to complete FW swap.")
 
     asyncio.run(f())
+
+
+@app.command()
+def shell() -> None:
+    """Open the `smpmgr` interactive shell. Type 'exit' or 'quit' to exit."""
+
+    print("".join(HELP_LINES))
+    print("Type 'exit' or 'quit' to exit the shell.\n")
+
+    while True:
+        args = typer.prompt("smpmgr", prompt_suffix=' >').split()
+
+        if args[0] in {"exit", "quit"}:
+            break
+        if args[0] == "shell":
+            print("The 'shell' command cannot be used from within the shell.")
+            continue
+
+        try:
+            app(args)
+        except SystemExit:
+            continue
