@@ -53,7 +53,6 @@ try:
         subprocess.run(
             [
                 "pyinstaller",
-                "--onefile",
                 "--add-data",
                 f"dist/smpmgr-{version}:smpmgr",
                 "--copy-metadata",
