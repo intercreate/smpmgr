@@ -25,6 +25,7 @@ from smpmgr.common import (
 )
 from smpmgr.image_management import upload_with_progress_bar
 from smpmgr.logging import LogLevel, setup_logging
+from smpmgr.user import intercreate
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ HELP_LINES: Final = (
 app: Final = typer.Typer(help="\n".join(HELP_LINES))
 app.add_typer(os_management.app)
 app.add_typer(image_management.app)
+app.add_typer(intercreate.app)
 
 
 @app.callback(invoke_without_command=True)
