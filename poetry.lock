@@ -1027,13 +1027,13 @@ files = [
 
 [[package]]
 name = "smp"
-version = "0.3.1"
+version = "0.3.3"
 description = "Simple Management Protocol (SMP) for remotely managing MCU firmware"
 optional = false
 python-versions = ">=3.10,<3.13"
 files = [
-    {file = "smp-0.3.1-py3-none-any.whl", hash = "sha256:cb8c17f9a43b534e625d3f35e87f533fb1d8021a862e686153982ab889c7b3a7"},
-    {file = "smp-0.3.1.tar.gz", hash = "sha256:b43cff652223dd6055219ae22137056aabccd621099c0e364f76f4c8f7c6f9e2"},
+    {file = "smp-0.3.3-py3-none-any.whl", hash = "sha256:041f0078e9b4827f209b45bc43927879346caefef78076bb35d3e2be7abb307c"},
+    {file = "smp-0.3.3.tar.gz", hash = "sha256:d606f2929a522309b3140668784ef3e147a5574dd263f9309dbf4e8d7a3e2a74"},
 ]
 
 [package.dependencies]
@@ -1043,20 +1043,20 @@ pydantic = ">=2.4.2,<3.0.0"
 
 [[package]]
 name = "smpclient"
-version = "1.2.1"
+version = "1.3.1"
 description = "Simple Management Protocol (SMP) Client for remotely managing MCU firmware"
 optional = false
 python-versions = ">=3.10,<3.13"
 files = [
-    {file = "smpclient-1.2.1-py3-none-any.whl", hash = "sha256:0300eb306438dc114255acbd596e20f86658b32ab41e93bfb95afbb421e6499d"},
-    {file = "smpclient-1.2.1.tar.gz", hash = "sha256:8ecd5c08c5a4b48543ee11ddba81033bd15cedd14bd7c5c5452fb522a69548e5"},
+    {file = "smpclient-1.3.1-py3-none-any.whl", hash = "sha256:5902e4f161f4dc679f6c672bec145dc6ce8512c9d0803721352f43ba3a5f4318"},
+    {file = "smpclient-1.3.1.tar.gz", hash = "sha256:4f124200f5db4caf603e71a2a88ccf073b0d8b2ec61cf07a7ae199eb99773760"},
 ]
 
 [package.dependencies]
 bleak = ">=0.21.1,<0.22.0"
 intelhex = ">=2.3.0,<3.0.0"
 pyserial = ">=3.5,<4.0"
-smp = ">=0.3.1,<0.4.0"
+smp = ">=0.3.3,<0.4.0"
 
 [[package]]
 name = "tomli"
@@ -1336,4 +1336,4 @@ all = ["winrt-Windows.Foundation.Collections[all] (==2.0.0-beta.1)", "winrt-Wind
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, <3.13"
-content-hash = "d0e930f31345a0eaefa28a9043540d51c4d7a1f2afd9e0456da9ced741572d3a"
+content-hash = "9da9f374a86ef06ad34a0749a33da11167e5844047a80340449644a0b93000c8"
