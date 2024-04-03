@@ -3,6 +3,7 @@
 import asyncio
 import logging
 from dataclasses import dataclass, fields
+from typing import Type, TypeVar
 
 import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -13,6 +14,11 @@ from smpclient.generics import SMPRequest, TEr0, TEr1, TErr, TRep
 from smpclient.transport.serial import SMPSerialTransport
 
 logger = logging.getLogger(__name__)
+
+TSMPClient = TypeVar(
+    "TSMPClient",
+    bound=SMPClient,
+)
 
 
 @dataclass(frozen=True)
@@ -27,13 +33,13 @@ class Options:
     mtu: int
 
 
-def get_smpclient(options: Options) -> SMPClient:
-    """Return an `SMPClient` to the chosen transport or raise `typer.Exit`."""
+def get_custom_smpclient(options: Options, smp_client_cls: Type[TSMPClient]) -> TSMPClient:
+    """Return an `SMPClient` subclass to the chosen transport or raise `typer.Exit`."""
     if options.transport.port is not None:
         logger.info(
             f"Initializing SMPClient with the SMPSerialTransport, {options.transport.port=}"
         )
-        return SMPClient(SMPSerialTransport(mtu=options.mtu), options.transport.port)
+        return smp_client_cls(SMPSerialTransport(mtu=options.mtu), options.transport.port)
     else:
         typer.echo(
             f"A transport option is required; "
@@ -41,6 +47,11 @@ def get_smpclient(options: Options) -> SMPClient:
         )
         typer.echo("See smpmgr --help.")
         raise typer.Exit(code=1)
+
+
+def get_smpclient(options: Options) -> SMPClient:
+    """Return an `SMPClient` to the chosen transport or raise `typer.Exit`."""
+    return get_custom_smpclient(options, SMPClient)
 
 
 async def connect_with_spinner(smpclient: SMPClient) -> None:
