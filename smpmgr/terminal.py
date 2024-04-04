@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Final, cast
 
 import readchar
@@ -6,6 +7,8 @@ import typer
 from serial import Serial
 
 from smpmgr.common import Options
+
+logger = logging.getLogger(__name__)
 
 MAP_KEY_TO_BYTES: Final = {
     readchar.key.CTRL_C: b"\x03",
@@ -42,7 +45,7 @@ def terminal(ctx: typer.Context) -> None:
                 return_when=asyncio.FIRST_EXCEPTION,
             )
 
-        print(device_result, keyboard_result)
+        logger.debug(f"{device_result=}, {keyboard_result=}")
 
     asyncio.run(f())
 
