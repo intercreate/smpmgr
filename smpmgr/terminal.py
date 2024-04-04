@@ -45,7 +45,7 @@ def terminal(ctx: typer.Context) -> None:
                 return_when=asyncio.FIRST_EXCEPTION,
             )
 
-        logger.debug(f"{device_result=}, {keyboard_result=}")
+            logger.debug(f"{device_result=}, {keyboard_result=}")
 
     asyncio.run(f())
 
