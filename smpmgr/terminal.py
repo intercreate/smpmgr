@@ -65,10 +65,13 @@ async def _rx_from_device(port: Serial) -> None:
 def _tx_keyboard_to_device(port: Serial) -> None:
     """Blocking read of keyboard input."""
     while True:
-        char = readchar.readchar()
-        if char == readchar.key.CTRL_T:
+        try:
+            key = readchar.readkey()
+        except KeyboardInterrupt:
+            key = readchar.key.CTRL_C
+        if key == readchar.key.CTRL_T:
             raise KeyboardInterrupt
         try:
-            port.write(MAP_KEY_TO_BYTES[char])
+            port.write(MAP_KEY_TO_BYTES[key])
         except KeyError:
-            port.write(char.encode())
+            port.write(key.encode())
