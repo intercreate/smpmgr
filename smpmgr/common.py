@@ -6,6 +6,7 @@ from dataclasses import dataclass, fields
 from typing import Type, TypeVar
 
 import typer
+from rich import print
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from serial import SerialException
 from smp.exceptions import SMPBadStartDelimiter
@@ -23,7 +24,9 @@ TSMPClient = TypeVar(
 
 @dataclass(frozen=True)
 class TransportDefinition:
-    port: str | None
+    port: str | None = None
+    usb: str | None = None
+    ble: str | None = None
 
 
 @dataclass(frozen=True)
@@ -41,11 +44,15 @@ def get_custom_smpclient(options: Options, smp_client_cls: Type[TSMPClient]) -> 
         )
         return smp_client_cls(SMPSerialTransport(), options.transport.port)
     else:
-        typer.echo(
-            f"A transport option is required; "
-            f"one of [{', '.join(map(lambda x: '--' + x.name, fields(options.transport)))}]."
+        transport_tuples = [
+            ("port", "ADDRESS"),
+            ("usb", "VID:PID"),
+            ("ble", "ADDRESS"),
+        ]
+        print(
+            f"A transport option is required:\n\n"
+            f"smpmgr [bold][cyan]< {' | '.join(map(lambda t: '[cyan]--' + t[0] + f" [yellow]{t[1]}[cyan]", transport_tuples))} >[reset] <group> <command> "
         )
-        typer.echo("See smpmgr --help.")
         raise typer.Exit(code=1)
 
 

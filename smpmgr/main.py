@@ -1,12 +1,14 @@
 """Entry point for the `smpmgr` application."""
 
 import asyncio
+import enum
 import logging
 from importlib.metadata import version as get_version
 from pathlib import Path
 from typing import Final, cast
 
 import typer
+from pydantic import BaseModel
 from rich import print
 from smp import error as smperr
 from smp.os_management import OS_MGMT_RET_RC
@@ -43,11 +45,35 @@ app.add_typer(intercreate.app)
 app.command()(terminal.terminal)
 
 
+class SerialTransportOptionsBase(BaseModel):
+    max_size: int = 256
+    line_length: int = 128
+    line_buffers: int = 2
+
+
+class SerialTransportOptions(SerialTransportOptionsBase):
+    baudrate: int = 115200
+    bytesize: int = 8
+    parity: str = "N"
+    stopbits: int = 1
+    timeout: float | None = None
+    xonxoff: bool = False
+    rtscts: bool = False
+    write_timeout: float | None = None
+    dsrdtr: bool = False
+    inter_byte_timeout: float | None = None
+    exclusive: bool | None = None
+
+
 @app.callback(invoke_without_command=True)
 def options(
     ctx: typer.Context,
     port: str = typer.Option(
         None, help="The serial port to connect to, e.g. COM1, /dev/ttyACM0, etc."
+    ),
+    transport_options: str = typer.Option(
+        "'{}'",
+        help="Transport options as a JSON string, e.g. '{\"baudrate\": 115200}'.  Use `smpmgr transport --help` to see available options.",
     ),
     timeout: float = typer.Option(
         2.0, help="Transport timeout in seconds; how long to wait for requests"
@@ -168,3 +194,23 @@ def shell() -> None:
             app(args)
         except SystemExit:
             continue
+
+
+class TransportOptions(enum.Enum):
+    SERIAL = "serial"
+    USB = "usb"
+
+
+@app.command()
+def transport(transport: TransportOptions) -> None:
+    """Print the transport options."""
+
+    print("Options for --transport-options when using ", end="")
+    if transport == TransportOptions.SERIAL:
+        print("--port")
+        print(SerialTransportOptions().model_dump_json(indent=2))
+    elif transport == TransportOptions.USB:
+        print("--port")
+        print(SerialTransportOptionsBase().model_dump_json(indent=2))
+    else:
+        raise typer.BadParameter(f"No options for {transport.value}")
