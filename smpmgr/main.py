@@ -15,7 +15,7 @@ from smpclient.requests.image_management import ImageStatesWrite
 from smpclient.requests.os_management import ResetWrite
 from typing_extensions import Annotated
 
-from smpmgr import image_management, os_management, terminal
+from smpmgr import file_management, image_management, os_management, terminal
 from smpmgr.common import (
     Options,
     TransportDefinition,
@@ -37,6 +37,7 @@ HELP_LINES: Final = (
 app: Final = typer.Typer(help="\n".join(HELP_LINES))
 app.add_typer(os_management.app)
 app.add_typer(image_management.app)
+app.add_typer(file_management.app)
 app.add_typer(intercreate.app)
 app.command()(terminal.terminal)
 
