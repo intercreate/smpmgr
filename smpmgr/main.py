@@ -8,8 +8,9 @@ from typing import Final, cast
 
 import typer
 from rich import print
+from smp import error as smperr
 from smp.os_management import OS_MGMT_RET_RC
-from smpclient.generics import error, success
+from smpclient.generics import error, error_v1, error_v2, success
 from smpclient.mcuboot import IMAGE_TLV, ImageInfo, TLVNotFound
 from smpclient.requests.image_management import ImageStatesWrite
 from smpclient.requests.os_management import ResetWrite
@@ -114,26 +115,27 @@ def upgrade(
 
         if slot != 0:
             # mark the new image for testing (swap)
-            r = await smp_request(
+            image_states_response = await smp_request(
                 smpclient,
                 options,
-                ImageStatesWrite(hash=image_tlv_sha256.value),  # type: ignore
+                ImageStatesWrite(hash=image_tlv_sha256.value),
                 "Marking uploaded image for test upgrade...",
-            )  # type: ignore
-            if error(r):
-                print(r)
+            )
+            if error(image_states_response):
+                print(image_states_response)
                 raise typer.Exit(code=1)
-            elif success(r):
+            elif success(image_states_response):
                 pass
             else:
                 raise Exception("Unreachable")
 
-        r = await smp_request(smpclient, options, ResetWrite())  # type: ignore
-        if error(r):
-            if r.rc != OS_MGMT_RET_RC.OK:
-                print(r)
-                typer.Exit(code=1)
-        elif success(r):
+        reset_response = await smp_request(smpclient, options, ResetWrite())
+        if (error_v1(reset_response) and reset_response.rc != smperr.MGMT_ERR.EOK) or (
+            error_v2(reset_response) and reset_response.err.rc != OS_MGMT_RET_RC.OK
+        ):
+            print(reset_response)
+            typer.Exit(code=1)
+        elif success(reset_response):
             pass
         else:
             raise Exception("Unreachable")
