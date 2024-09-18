@@ -10,7 +10,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from serial import SerialException
 from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
-from smpclient.generics import SMPRequest, TEr0, TEr1, TErr, TRep
+from smpclient.generics import SMPRequest, TEr1, TEr2, TRep
 from smpclient.transport.serial import SMPSerialTransport
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,15 @@ def get_custom_smpclient(options: Options, smp_client_cls: Type[TSMPClient]) -> 
         logger.info(
             f"Initializing SMPClient with the SMPSerialTransport, {options.transport.port=}"
         )
-        return smp_client_cls(SMPSerialTransport(mtu=options.mtu), options.transport.port)
+        if options.mtu is not None:
+            return smp_client_cls(
+                SMPSerialTransport(
+                    max_smp_encoded_frame_size=options.mtu, line_length=options.mtu, line_buffers=1
+                ),
+                options.transport.port,
+            )
+        else:
+            return smp_client_cls(SMPSerialTransport(), options.transport.port)
     else:
         typer.echo(
             f"A transport option is required; "
@@ -81,9 +89,9 @@ async def connect_with_spinner(smpclient: SMPClient) -> None:
 async def smp_request(
     smpclient: SMPClient,
     options: Options,
-    request: SMPRequest[TRep, TEr0, TEr1, TErr],
+    request: SMPRequest[TRep, TEr1, TEr2],
     description: str | None = None,
-) -> TRep | TErr:
+) -> TRep | TEr1 | TEr2:
     with Progress(
         SpinnerColumn(), TextColumn("[progress.description]{task.description}")
     ) as progress:
