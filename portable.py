@@ -48,19 +48,19 @@ try:
     assert len(archives) == 1
     shutil.unpack_archive(archives[0], "dist")
 
-    # build the one-file executable
+    # build the portable
     assert (
         subprocess.run(
             [
                 "pyinstaller",
-                "--onefile",
                 "--add-data",
                 f"dist/smpmgr-{version}:smpmgr",
-                "--copy-metadata",
-                "smpmgr",
+                "--copy-metadat=smpmgr",
+                "--copy-metadata=readchar",
                 "--name=smpmgr",
-                "--collect-submodules",
-                "shellingham",
+                "--collect-submodules=shellingham",
+                "--collect-submodules=readchar",
+                "--hidden-import=readchar",
                 "smpmgr/__main__.py",
             ]
         ).returncode
@@ -70,7 +70,7 @@ try:
     # run the executable and check the version
     assert (
         f"Version {version}"
-        in subprocess.run(["dist/smpmgr", "--help"], capture_output=True).stdout.decode()
+        in subprocess.run(["dist/smpmgr/smpmgr", "--help"], capture_output=True).stdout.decode()
     )
 
     # create the folder
@@ -80,7 +80,7 @@ try:
     os.makedirs(dist_path, exist_ok=True)
 
     # copy the executable to the folder
-    shutil.copy(Path("dist", exe_name), Path(dist_path, exe_name))
+    shutil.copytree(Path("dist", "smpmgr"), Path(dist_path), dirs_exist_ok=True)
 
     # create a VERSION.txt stamp
     with open(Path(dist_path, "VERSION.txt"), "w") as f:

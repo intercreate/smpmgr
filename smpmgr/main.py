@@ -31,7 +31,7 @@ from smpmgr.user import intercreate
 logger = logging.getLogger(__name__)
 
 HELP_LINES: Final = (
-    f"Simple Management Protocol (SMP) Manager Version {get_version(__package__)}\n",
+    f"Simple Management Protocol (SMP) Manager Version {get_version('smpmgr')}\n",
     "Copyright (c) 2023-2024 Intercreate, Inc. and Contributors\n",
 )
 
@@ -64,7 +64,7 @@ def options(
     version: Annotated[bool, typer.Option("--version", help="Show the version and exit.")] = False,
 ) -> None:
     if version:
-        print(get_version(__package__))
+        print(get_version('smpmgr'))
         raise typer.Exit()
 
     setup_logging(loglevel, logfile)
