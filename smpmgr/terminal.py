@@ -4,7 +4,8 @@ from typing import Final, cast
 
 import readchar
 import typer
-from serial import Serial
+from serial import Serial, SerialException
+from serial.tools.list_ports import grep
 
 from smpmgr.common import Options
 
@@ -25,27 +26,43 @@ def terminal(ctx: typer.Context) -> None:
 
     options = cast(Options, ctx.obj)
 
+    if options.transport.port is None:
+        print("--port <port> option is required for the terminal, e.g.")
+        print("smpmgr --port COM1 terminal")
+        return
+
     async def f() -> None:
-        if options.transport.port is None:
-            print("--port <port> option is required for the terminal, e.g.")
-            print("smpmgr --port COM1 terminal")
-            return
+        while True:
+            print(f"\n\x1b[2mWaiting for {options.transport.port}", end="", flush=True)
 
-        print(f"\x1b[2mOpening terminal to {options.transport.port}...", end="")
+            MAX_DOTS = 3
+            dot_count = 0
+            while len(tuple(grep(rf"{options.transport.port}"))) == 0:
+                print(
+                    f"\rWaiting for {options.transport.port}"
+                    + "." * dot_count
+                    + " " * (MAX_DOTS - dot_count),
+                    end="",
+                    flush=True,
+                )
+                dot_count = (dot_count + 1) % (MAX_DOTS + 1)
+                await asyncio.sleep(0.250)
 
-        with Serial(port=options.transport.port, baudrate=115200, timeout=options.timeout) as s:
-            print("OK")
-            print("Press Ctrl-T to exit the terminal.\x1b[22m")
-            print()
-            device_result, keyboard_result = await asyncio.wait(
-                (
-                    asyncio.create_task(_rx_from_device(s)),
-                    asyncio.create_task(asyncio.to_thread(_tx_keyboard_to_device, s)),
-                ),
-                return_when=asyncio.FIRST_EXCEPTION,
-            )
+            print(f"\nOpening terminal to {options.transport.port}...", end="")
 
-            logger.debug(f"{device_result=}, {keyboard_result=}")
+            with Serial(port=options.transport.port, baudrate=115200, timeout=options.timeout) as s:
+                print("OK")
+                print("Press Ctrl-T to exit the terminal.\x1b[22m")
+                print()
+                device_result, keyboard_result = await asyncio.wait(
+                    (
+                        asyncio.create_task(_rx_from_device(s)),
+                        asyncio.create_task(asyncio.to_thread(_tx_keyboard_to_device, s)),
+                    ),
+                    return_when=asyncio.FIRST_EXCEPTION,
+                )
+
+                logger.debug(f"{device_result=}, {keyboard_result=}")
 
     asyncio.run(f())
 
