@@ -43,7 +43,6 @@ Python environment setup, then it is **strongly recommended** to install `smpmgr
 
 ### Install Dependencies
 
-- python >=3.10, <3.13
 - poetry: https://python-poetry.org/docs/#installation
 
 ### Create the venv
