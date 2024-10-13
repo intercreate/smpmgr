@@ -5,50 +5,55 @@ permissions:
 on:
   release:
     types: [published]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
     name: Build executable 🔨
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - run: |
-        git fetch --prune --unshallow --tags
-        git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
+      - run: |
+          git fetch --prune --unshallow --tags
+          git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
 
-    - run: pipx install poetry
+      - run: pipx install poetry
 
-    - uses: actions/setup-python@v4
-      with:
-        python-version: "3.12"
-        cache: 'poetry'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "poetry"
 
-    - run: poetry install
+      - run: poetry install
 
-    - if: matrix.os == 'ubuntu-latest'
-      run: |
-        shopt -s expand_aliases
-        . ./envr.ps1
-        build
+      - if: matrix.os != 'windows-latest'
+        run: |
+          shopt -s expand_aliases
+          . ./envr.ps1
+          build
 
-    - if: matrix.os == 'windows-latest'
-      run: |
-        . ./envr.ps1
-        build
-    
-    - name: Get name of the portable build
-      id: get_name
-      shell: bash
-      run:  echo "BUILD_NAME=$(ls dist | grep smpmgr-.*\.zip)" >> $GITHUB_OUTPUT
-    
-    - name: Upload portable build 🚀
-      uses: svenstaro/upload-release-action@v2
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        file: dist/${{ steps.get_name.outputs.BUILD_NAME }}
-        tag: ${{ github.ref }}
+      - if: matrix.os == 'windows-latest'
+        run: |
+          . ./envr.ps1
+          build
+
+      - name: Get name of the portable build
+        id: get_name
+        shell: bash
+        run: echo "BUILD_NAME=$(ls dist | grep smpmgr-.*\.zip)" >> $GITHUB_OUTPUT
+
+      - name: Upload portable build 🚀
+        if: github.event_name == 'release' && github.event.action == 'published'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/${{ steps.get_name.outputs.BUILD_NAME }}
+          tag: ${{ github.ref }}
