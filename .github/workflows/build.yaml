@@ -5,13 +5,17 @@ permissions:
 on:
   release:
     types: [published]
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   build:
     name: Build executable 🔨
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -47,6 +51,7 @@ jobs:
         run: echo "BUILD_NAME=$(ls dist | grep smpmgr-.*\.zip)" >> $GITHUB_OUTPUT
 
       - name: Upload portable build 🚀
+        if: github.event_name == 'release' && github.event.action == 'published'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
