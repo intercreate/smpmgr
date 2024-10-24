@@ -26,7 +26,7 @@ from smpmgr.common import (
 )
 from smpmgr.image_management import upload_with_progress_bar
 from smpmgr.logging import LogLevel, setup_logging
-from smpmgr.user import intercreate
+from smpmgr.user import custom, intercreate
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +40,7 @@ app.add_typer(os_management.app)
 app.add_typer(image_management.app)
 app.add_typer(file_management.app)
 app.add_typer(intercreate.app)
+app.add_typer(custom.app)
 app.command()(terminal.terminal)
 
 
