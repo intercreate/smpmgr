@@ -37,7 +37,7 @@ def state_read(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        await connect_with_spinner(smpclient, options.timeout)
 
         r = await smp_request(smpclient, options, ImageStatesRead(), "Waiting for image states...")  # type: ignore # noqa
 
@@ -104,10 +104,11 @@ def upload(
         logger.exception("Inspection of FW image failed")
         raise typer.Exit(code=1)
 
-    smpclient = get_smpclient(cast(Options, ctx.obj))
+    options = cast(Options, ctx.obj)
+    smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        await connect_with_spinner(smpclient, options.timeout)
         with open(file, "rb") as f:
             await upload_with_progress_bar(smpclient, f, slot)
 

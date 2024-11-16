@@ -40,7 +40,7 @@ def get_supported_hash_types(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        await connect_with_spinner(smpclient, options.timeout)
 
         r = await smp_request(smpclient, options, SupportedFileHashChecksumTypes(), "Waiting for supported hash types...")  # type: ignore # noqa
 
@@ -64,7 +64,7 @@ def get_hash(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        await connect_with_spinner(smpclient, options.timeout)
 
         r = await smp_request(smpclient, options, FileHashChecksum(name=file), "Waiting for hash...")  # type: ignore # noqa
 
@@ -86,7 +86,7 @@ def read_size(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        await connect_with_spinner(smpclient, options.timeout)
 
         r = await smp_request(smpclient, options, FileStatus(name=file), "Waiting for file size...")  # type: ignore # noqa
 
@@ -141,10 +141,11 @@ def upload(
 ) -> None:
     """Upload a file."""
 
-    smpclient = get_smpclient(cast(Options, ctx.obj))
+    options = cast(Options, ctx.obj)
+    smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        await connect_with_spinner(smpclient, options.timeout)
         with open(file, "rb") as f:
             await upload_with_progress_bar(smpclient, f, destination)
 
@@ -159,10 +160,11 @@ def download(
 ) -> None:
     """Download a file."""
 
-    smpclient = get_smpclient(cast(Options, ctx.obj))
+    options = cast(Options, ctx.obj)
+    smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        await connect_with_spinner(smpclient, options.timeout)
         with destination.open("wb") as dest_f:
             file_data = await smpclient.download_file(file)
             dest_f.write(file_data)
