@@ -49,6 +49,7 @@ def options(
     port: str = typer.Option(
         None, help="The serial port to connect to, e.g. COM1, /dev/ttyACM0, etc."
     ),
+    ble: str = typer.Option(None, help="The Bluetooth address to connect to"),
     timeout: float = typer.Option(
         2.0, help="Transport timeout in seconds; how long to wait for requests"
     ),
@@ -69,7 +70,7 @@ def options(
 
     setup_logging(loglevel, logfile)
 
-    ctx.obj = Options(timeout=timeout, transport=TransportDefinition(port=port), mtu=mtu)
+    ctx.obj = Options(timeout=timeout, transport=TransportDefinition(port=port, ble=ble), mtu=mtu)
     logger.info(ctx.obj)
 
     if ctx.invoked_subcommand is None:

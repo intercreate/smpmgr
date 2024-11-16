@@ -11,6 +11,7 @@ from serial import SerialException
 from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import SMPRequest, TEr1, TEr2, TRep
+from smpclient.transport.ble import SMPBLETransport
 from smpclient.transport.serial import SMPSerialTransport
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,7 @@ TSMPClient = TypeVar(
 @dataclass(frozen=True)
 class TransportDefinition:
     port: str | None
+    ble: str | None
 
 
 @dataclass(frozen=True)
@@ -48,6 +50,12 @@ def get_custom_smpclient(options: Options, smp_client_cls: Type[TSMPClient]) -> 
             )
         else:
             return smp_client_cls(SMPSerialTransport(), options.transport.port)
+    elif options.transport.ble is not None:
+        logger.info(f"Initializing SMPClient with the SMPBLETransport, {options.transport.ble=}")
+        return smp_client_cls(
+            SMPBLETransport(),
+            options.transport.ble,
+        )
     else:
         typer.echo(
             f"A transport option is required; "
