@@ -69,10 +69,11 @@ def upload(
 ) -> None:
     """Upload data to custom image slots, like a secondary MCU or external storage."""
 
-    smpclient = get_custom_smpclient(cast(Options, ctx.obj), ic.ICUploadClient)
+    options = cast(Options, ctx.obj)
+    smpclient = get_custom_smpclient(options, ic.ICUploadClient)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        await connect_with_spinner(smpclient, options.timeout)
         with open(file, "rb") as f:
             await upload_with_progress_bar(smpclient, f, image)
 

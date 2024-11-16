@@ -18,7 +18,7 @@ def echo(ctx: typer.Context, message: str) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        await connect_with_spinner(smpclient, options.timeout)
         r = await smp_request(smpclient, options, EchoWrite(d=message))  # type: ignore
         print(r)
 
@@ -33,7 +33,7 @@ def reset(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        await connect_with_spinner(smpclient, options.timeout)
         r = await smp_request(smpclient, options, ResetWrite())  # type: ignore
         print(r)
 
