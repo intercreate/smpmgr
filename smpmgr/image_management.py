@@ -20,7 +20,7 @@ from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import error, success
 from smpclient.mcuboot import ImageInfo
-from smpclient.requests.image_management import ImageStatesRead
+from smpclient.requests.image_management import ImageStatesRead, ImageStatesWrite
 from typing_extensions import Annotated
 
 from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
@@ -50,6 +50,33 @@ def state_read(ctx: typer.Context) -> None:
                 print(image)
             if r.splitStatus is not None:
                 print(f"splitStatus: {r.splitStatus}")
+        else:
+            raise Exception("Unreachable")
+
+    asyncio.run(f())
+
+
+@app.command()
+def state_write(
+    ctx: typer.Context,
+    hash: Annotated[str, typer.Argument(help="SHA256 hash of the image header and body.")],
+    confirm: Annotated[bool, typer.Argument(help="Confirm the image given by hash.")],
+) -> None:
+    """Request to write the state of FW images on the SMP Server."""
+
+    options = cast(Options, ctx.obj)
+    smpclient = get_smpclient(options)
+    hash_bytes = bytes.fromhex(hash)
+
+    async def f() -> None:
+        await connect_with_spinner(smpclient, options.timeout)
+
+        r = await smp_request(smpclient, options, ImageStatesWrite(hash=hash_bytes, confirm=confirm), "Waiting for image state write...")  # type: ignore # noqa
+
+        if error(r):
+            print(r)
+        elif success(r):
+            pass
         else:
             raise Exception("Unreachable")
 
