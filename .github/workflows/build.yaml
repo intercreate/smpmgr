@@ -25,7 +25,7 @@ jobs:
           git fetch --prune --unshallow --tags
           git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
 
-      - run: pipx install poetry
+      - run: pipx install poetry==1.8.5
 
       - uses: actions/setup-python@v5
         with:
