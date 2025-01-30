@@ -14,7 +14,7 @@ from smpclient.generics import error, error_v1, error_v2, success
 from smpclient.mcuboot import IMAGE_TLV, ImageInfo, TLVNotFound
 from smpclient.requests.image_management import ImageStatesWrite
 from smpclient.requests.os_management import ResetWrite
-from typing_extensions import Annotated
+from typing_extensions import Annotated, assert_never
 
 from smpmgr import file_management, image_management, os_management, terminal
 from smpmgr.common import (
@@ -122,24 +122,30 @@ def upgrade(
                 ImageStatesWrite(hash=image_tlv_sha256.value),
                 "Marking uploaded image for test upgrade...",
             )
-            if error(image_states_response):
+            if success(image_states_response):
+                pass
+            elif error(image_states_response):
                 print(image_states_response)
                 raise typer.Exit(code=1)
-            elif success(image_states_response):
-                pass
             else:
-                raise Exception("Unreachable")
+                assert_never(image_states_response)
 
         reset_response = await smp_request(smpclient, options, ResetWrite())
-        if (error_v1(reset_response) and reset_response.rc != smperr.MGMT_ERR.EOK) or (
-            error_v2(reset_response) and reset_response.err.rc != OS_MGMT_RET_RC.OK
-        ):
-            print(reset_response)
-            typer.Exit(code=1)
-        elif success(reset_response):
+        if success(reset_response):
             pass
+        elif error(reset_response):
+            if error_v1(reset_response):
+                if reset_response.rc != smperr.MGMT_ERR.EOK:
+                    print(reset_response)
+                    raise typer.Exit(code=1)
+            elif error_v2(reset_response):
+                if reset_response.err.rc != OS_MGMT_RET_RC.OK:
+                    print(reset_response)
+                    raise typer.Exit(code=1)
+            else:
+                assert_never(reset_response)
         else:
-            raise Exception("Unreachable")
+            assert_never(reset_response)
 
         print("Upgrade complete.")
 
