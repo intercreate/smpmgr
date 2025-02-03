@@ -51,7 +51,7 @@ try:
     # build the portable
     assert (
         subprocess.run(
-            [
+            (
                 "pyinstaller",
                 "--add-data",
                 f"dist/smpmgr-{version}:smpmgr",
@@ -62,7 +62,12 @@ try:
                 "--collect-submodules=readchar",
                 "--hidden-import=readchar",
                 "smpmgr/__main__.py",
-            ]
+            )
+            + (
+                "--hidden-import=winrt.windows.foundation.collections",  # https://github.com/intercreate/smpmgr/issues/34 # noqa: E501
+            )
+            if sys.platform == "win32"
+            else ()
         ).returncode
         == 0
     )
