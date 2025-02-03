@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 HELP_LINES: Final = (
     f"Simple Management Protocol (SMP) Manager Version {get_version('smpmgr')}\n",
-    "Copyright (c) 2023-2024 Intercreate, Inc. and Contributors\n",
+    "Copyright (c) 2023-2025 Intercreate, Inc. and Contributors\n",
 )
 
 app: Final = typer.Typer(help="\n".join(HELP_LINES))

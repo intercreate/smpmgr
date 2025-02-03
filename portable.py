@@ -93,7 +93,7 @@ try:
             (
                 "Simple Management Protocol Manager (smpmgr)\n",
                 "\n",
-                "Copyright (c) Intercreate, Inc. 2023-2024\n",
+                "Copyright (c) Intercreate, Inc. 2023-2025\n",
                 "SPDX-License-Identifier: Apache-2.0\n",
                 "\n",
                 "https://www.intercreate.io/\n",
