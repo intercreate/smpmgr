@@ -51,7 +51,7 @@ try:
     # build the portable
     assert (
         subprocess.run(
-            [
+            (
                 "pyinstaller",
                 "--add-data",
                 f"dist/smpmgr-{version}:smpmgr",
@@ -62,7 +62,12 @@ try:
                 "--collect-submodules=readchar",
                 "--hidden-import=readchar",
                 "smpmgr/__main__.py",
-            ]
+            )
+            + (
+                "--hidden-import=winrt.windows.foundation.collections",  # https://github.com/intercreate/smpmgr/issues/34 # noqa: E501
+            )
+            if sys.platform == "win32"
+            else ()
         ).returncode
         == 0
     )
@@ -88,7 +93,7 @@ try:
             (
                 "Simple Management Protocol Manager (smpmgr)\n",
                 "\n",
-                "Copyright (c) Intercreate, Inc. 2023-2024\n",
+                "Copyright (c) Intercreate, Inc. 2023-2025\n",
                 "SPDX-License-Identifier: Apache-2.0\n",
                 "\n",
                 "https://www.intercreate.io/\n",
