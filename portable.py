@@ -64,10 +64,12 @@ try:
                 "smpmgr/__main__.py",
             )
             + (
-                "--hidden-import=winrt.windows.foundation.collections",  # https://github.com/intercreate/smpmgr/issues/34 # noqa: E501
+                (
+                    "--hidden-import=winrt.windows.foundation.collections",  # https://github.com/intercreate/smpmgr/issues/34 # noqa: E501
+                )
+                if sys.platform == "win32"
+                else ()
             )
-            if sys.platform == "win32"
-            else ()
         ).returncode
         == 0
     )
@@ -127,7 +129,7 @@ finally:  # always remove the poetry-version-plugin
 
 if exception is not None:
     print("An exception occurred during the build\n")
-    traceback.print_tb(exception.__traceback__)
+    print("".join(traceback.format_tb(exception.__traceback__)))
 
     print("\nExiting with error 1.")
     sys.exit(1)
