@@ -64,10 +64,12 @@ try:
                 "smpmgr/__main__.py",
             )
             + (
-                "--hidden-import=winrt.windows.foundation.collections",  # https://github.com/intercreate/smpmgr/issues/34 # noqa: E501
+                (
+                    "--hidden-import=winrt.windows.foundation.collections",  # https://github.com/intercreate/smpmgr/issues/34 # noqa: E501
+                )
+                if sys.platform == "win32"
+                else ()
             )
-            if sys.platform == "win32"
-            else ()
         ).returncode
         == 0
     )
