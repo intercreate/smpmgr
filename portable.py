@@ -127,7 +127,7 @@ finally:  # always remove the poetry-version-plugin
 
 if exception is not None:
     print("An exception occurred during the build\n")
-    traceback.print_tb(exception.__traceback__)
+    print("".join(traceback.format_tb(exception.__traceback__)))
 
     print("\nExiting with error 1.")
     sys.exit(1)
