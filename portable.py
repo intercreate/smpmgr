@@ -78,9 +78,12 @@ try:
         in subprocess.run(["dist/smpmgr/smpmgr", "--help"], capture_output=True).stdout.decode()
     )
 
+    platform_system: Final = platform.system().lower()
+    platform_name: Final = "macos" if platform_system == "darwin" else platform_system
+
     # create the folder
     dist_path: Final = Path(
-        "dist", f"smpmgr-{version}-{platform.system().lower()}-{platform.machine().lower()}"
+        "dist", f"smpmgr-{version}-{platform_name}-{platform.machine().lower()}"
     )
     os.makedirs(dist_path, exist_ok=True)
 
