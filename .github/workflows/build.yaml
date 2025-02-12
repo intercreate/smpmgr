@@ -15,7 +15,7 @@ jobs:
     name: Build executable 🔨
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-latest, macos-latest]
+        os: [ubuntu-20.04, windows-latest, macos-latest, macos-13]
     runs-on: ${{ matrix.os }}
 
     steps:
