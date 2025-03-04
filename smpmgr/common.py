@@ -11,9 +11,9 @@ from serial import SerialException
 from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import SMPRequest, TEr1, TEr2, TRep
-from smpclient.transport.udp import SMPUDPTransport
 from smpclient.transport.ble import SMPBLETransport
 from smpclient.transport.serial import SMPSerialTransport
+from smpclient.transport.udp import SMPUDPTransport
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +59,9 @@ def get_custom_smpclient(options: Options, smp_client_cls: Type[TSMPClient]) -> 
             options.transport.ble,
         )
     elif options.transport.ip is not None:
-        logger.info(f"Initializing SMPClient with the SMPUDPTransport, {options.transport.ip=} and MTU 1024")
+        logger.info(
+            f"Initializing SMPClient with the SMPUDPTransport, {options.transport.ip=} and MTU 1024"
+        )
         return smp_client_cls(
             SMPUDPTransport(1024),
             options.transport.ip,
