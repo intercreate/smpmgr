@@ -46,6 +46,9 @@ app.command()(terminal.terminal)
 @app.callback(invoke_without_command=True)
 def options(
     ctx: typer.Context,
+    ip: str = typer.Option(
+        None, help="The IP address to connect to for UDP transport"
+    ),
     port: str = typer.Option(
         None, help="The serial port to connect to, e.g. COM1, /dev/ttyACM0, etc."
     ),
@@ -70,7 +73,7 @@ def options(
 
     setup_logging(loglevel, logfile)
 
-    ctx.obj = Options(timeout=timeout, transport=TransportDefinition(port=port, ble=ble), mtu=mtu)
+    ctx.obj = Options(timeout=timeout, transport=TransportDefinition(port=port, ble=ble, ip=ip), mtu=mtu)
     logger.info(ctx.obj)
 
     if ctx.invoked_subcommand is None:
