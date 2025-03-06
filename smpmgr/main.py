@@ -42,6 +42,19 @@ app.add_typer(file_management.app)
 app.add_typer(intercreate.app)
 app.command()(terminal.terminal)
 
+import os
+import imp
+from os import listdir
+
+if os.environ.get('SMPMGR_CUSTOM_GRP_DIR') is not None:
+    CUSTOM_GRP_PATH = os.environ['SMPMGR_CUSTOM_GRP_DIR']
+
+    for f in listdir(CUSTOM_GRP_PATH):
+        filename = Path(f).stem
+        if filename.endswith("_grp") and Path(f).suffix == ".py":
+            file, pathname, description = imp.find_module(filename, [CUSTOM_GRP_PATH])
+            custom_grp = imp.load_module(filename, file, pathname, description)
+            app.add_typer(custom_grp.app)
 
 @app.callback(invoke_without_command=True)
 def options(
