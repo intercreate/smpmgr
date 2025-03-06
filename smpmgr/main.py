@@ -2,8 +2,11 @@
 
 import asyncio
 import logging
+from importlib import import_module
 from importlib.metadata import version as get_version
+from os import environ, listdir
 from pathlib import Path
+from sys import path
 from typing import Final, cast
 
 import typer
@@ -41,6 +44,15 @@ app.add_typer(image_management.app)
 app.add_typer(file_management.app)
 app.add_typer(intercreate.app)
 app.command()(terminal.terminal)
+
+if environ.get('SMPMGR_CUSTOM_GRP_PATH') is not None:
+    CUSTOM_GRP_PATH = environ['SMPMGR_CUSTOM_GRP_PATH']
+    path.insert(0, CUSTOM_GRP_PATH)
+    for f in listdir(CUSTOM_GRP_PATH):
+        filename = Path(f).stem
+        if filename.endswith("_grp") and Path(f).suffix == ".py":
+            custom_grp = import_module(filename)
+            app.add_typer(custom_grp.app)
 
 
 @app.callback(invoke_without_command=True)
