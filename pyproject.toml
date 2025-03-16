@@ -46,6 +46,7 @@ mypy = "^1.7.0"
 mypy-extensions = "^1.0.0"
 types-pyserial = "^3.5.0.11"
 pyinstaller = "^6.3.0"
+poetry-dynamic-versioning = "^1.7.1"
 
 [tool.black]
 line-length = 100

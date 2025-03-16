@@ -27,6 +27,8 @@ jobs:
         with:
           python-version: "3.12"
 
+      - run: pipx inject poetry poetry-dynamic-versioning
+
       - run: poetry install
 
       - if: matrix.os != 'windows-latest'
@@ -44,6 +46,12 @@ jobs:
         id: get_name
         shell: bash
         run: echo "BUILD_NAME=$(ls dist | grep smpmgr-.*\.zip)" >> $GITHUB_OUTPUT
+
+      - name: Upload artifact 📦
+        uses: actions/upload-artifact@v4
+        with:
+          path: dist/${{ steps.get_name.outputs.BUILD_NAME }}
+          name: ${{ steps.get_name.outputs.BUILD_NAME }}
 
       - name: Upload portable build 🚀
         if: github.event_name == 'release' && github.event.action == 'published'
