@@ -9,5 +9,5 @@ PYTHON_VENV=.venv
 [ALIASES]
 lint=black --check --diff --color . && isort --check-only --diff . && flake8 . && mypy .
 test=coverage erase && pytest --cov
-build=python portable.py
+build=python -m portable.py
 format=black . && isort .
