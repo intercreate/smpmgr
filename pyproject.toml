@@ -26,7 +26,9 @@ style = "semver"
 metadata = true
 tagged-metadata = true
 dirty = true
+fix-shallow-repository = true
 pattern = '(?P<base>\d+\.\d+\.\d+)'
+format-jinja = "{% if distance == 0 %}{{ base }}{% else %}{{ base }}-dev{{ distance }}+g{{ commit }}{% endif %}{% if dirty %}.dirty{% endif %}"
 
 [tool.poetry.dependencies]
 python = ">=3.10, <3.14"
