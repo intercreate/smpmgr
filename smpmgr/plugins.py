@@ -1,7 +1,6 @@
 """Runtime discovery and execution of user-provided plugins."""
 
 import logging
-import os
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from typing import Final, NamedTuple
@@ -22,13 +21,11 @@ def get_plugins(argv: list[str]) -> tuple[Plugin, ...]:
     """Returns a tuple of plugin paths and removes them from `argv`."""
 
     logger.debug(f"{argv=}")
-    args: Final = argv[:]
     paths: Final[list[Path]] = []
-    for arg in args:
+    for arg in argv[:]:
         if arg.startswith("--plugin-path="):
             logger.debug(f"Found plugin path argument: {arg}")
-            path_str = arg.split("=")[1]
-            path = Path(path_str) if Path(path_str).is_absolute() else os.getcwd() / Path(path_str)
+            path = Path(arg.split("=")[1]).expanduser().resolve()
             if path.is_dir():
                 logger.debug(f"Adding plugin path and removing from argv: {path}")
                 paths.append(path)
