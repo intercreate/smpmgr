@@ -43,7 +43,7 @@ Python environment setup, then it is **strongly recommended** to install `smpmgr
 
 ### Install Dependencies
 
-- poetry==1.8.5: https://python-poetry.org/docs/#installation
+- poetry >= 2: https://python-poetry.org/docs/#installation
 
 ### Create the venv
 
