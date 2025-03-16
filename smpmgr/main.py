@@ -2,11 +2,13 @@
 
 import asyncio
 import logging
+import sys
 from importlib.metadata import version as get_version
 from pathlib import Path
 from typing import Final, cast
 
 import typer
+import typer.rich_utils
 from rich import print
 from smp import error as smperr
 from smp.os_management import OS_MGMT_RET_RC
@@ -26,22 +28,43 @@ from smpmgr.common import (
 )
 from smpmgr.image_management import upload_with_progress_bar
 from smpmgr.logging import LogLevel, setup_logging
-from smpmgr.user import custom, intercreate
+from smpmgr.plugins import get_plugins
+from smpmgr.user import intercreate
 
 logger = logging.getLogger(__name__)
 
+# Intercept and modify sys.argv to look for plugins
+plugins: Final = get_plugins(sys.argv)
+
 HELP_LINES: Final = (
     f"Simple Management Protocol (SMP) Manager Version {get_version('smpmgr')}\n",
-    "Copyright (c) 2023-2025 Intercreate, Inc. and Contributors\n",
+    "\n[dim]Copyright (c) 2023-2025 Intercreate, Inc. and Contributors[/dim]\n",
+) + (
+    (
+        "[bold yellow]"
+        "\nNOTE: Plugins have been loaded from the following source(s). Ensure that you "
+        "trust the files that have been loaded. The developers and contributors of "
+        "this application shall not be held liable for any damages, losses, or other "
+        "consequences arising from the use or misuse of this application.\n\n"
+        "[/bold yellow]",
+        "\n".join(f"  - {plugin.path.resolve()}" for plugin in plugins),
+    )
+    if plugins
+    else ()
 )
 
-app: Final = typer.Typer(help="\n".join(HELP_LINES))
+# Override the dimming of the help text
+typer.rich_utils.STYLE_HELPTEXT = ""
+
+app: Final = typer.Typer(help="".join(HELP_LINES), rich_markup_mode="rich")
 app.add_typer(os_management.app)
 app.add_typer(image_management.app)
 app.add_typer(file_management.app)
 app.add_typer(intercreate.app)
-app.add_typer(custom.app)
 app.command()(terminal.terminal)
+
+for plugin in plugins:
+    app.add_typer(plugin.app)
 
 
 @app.callback(invoke_without_command=True)
@@ -65,7 +88,15 @@ def options(
     loglevel: LogLevel = typer.Option(None, help="Debug log level"),
     logfile: Path = typer.Option(None, help="Log file path"),
     version: Annotated[bool, typer.Option("--version", help="Show the version and exit.")] = False,
+    plugin_path: Path = typer.Option(
+        None, help="Path to plugin directory. May be used more than once."
+    ),
 ) -> None:
+    if plugin_path:
+        raise ValueError(
+            "--plugin-path should have been removed from sys.argv by the get_plugins(sys.argv) "
+            f"call. This is a bug! {sys.argv=}"
+        )
     if version:
         print(get_version('smpmgr'))
         raise typer.Exit()
