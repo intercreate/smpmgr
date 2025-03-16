@@ -11,12 +11,21 @@ The SMP specification can be found
 
 ## Install
 
-You can download a portable executable for Windows or Linux from the
+You can download a portable executable for Windows, Linux, and macOS from the
 [latest releases page](https://github.com/intercreate/smpmgr/releases/latest).
 
 `smpmgr` is also [distributed by PyPI](https://pypi.org/project/smpmgr/).  If you already have a
 Python environment setup, then it is **strongly recommended** to install `smpmgr` with
 [pipx](https://github.com/pypa/pipx) instead of `pip`.
+
+## Custom SMP Groups
+
+`smpmgr` supports user-provided plugins that implement proprietary SMP groups.
+```
+smpmgr --plugin-path=plugins --help
+```
+
+See [/plugins](/plugins) for more information and examples.
 
 ## Development Quickstart
 

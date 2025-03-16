@@ -35,9 +35,8 @@ smpmgr --plugin-path=plugins --plugin-path=plugins/another another --help
 1. The Python source file(s) must end in `_group.py` in order to be discovered
    by `smpmgr`.
 2. There can only be one group per file.
-3. The group implementation that is imported to smpmgr must:
-   1. be named `app`
-   2. be an instance of `typer.Typer`
+3. `smpmgr` searches for the custom group CLI implementation by looking for a
+   `typer.Typer` named `app`.
 
 ## Examples
 
