@@ -48,15 +48,24 @@ pyinstaller = "^6.3.0"
 [tool.black]
 line-length = 100
 skip-string-normalization = true
+extend-exclude = '''
+/(
+    \.poetry
+)/
+'''
 
 [tool.isort]
 profile = "black"
 line_length = 100
 multi_line_output = 3
+extend_skip = [
+    ".poetry",
+]
+
 
 [tool.mypy]
 disallow_untyped_defs = true
-exclude = ['.venv', 'build', 'dist']
+exclude = ['.venv', 'build', 'dist', ".poetry"]
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore:The --rsyncdir:DeprecationWarning"]
