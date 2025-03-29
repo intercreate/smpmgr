@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - run: pipx install poetry==1.8.5
+      - run: pipx install poetry
 
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5

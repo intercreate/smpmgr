@@ -52,7 +52,7 @@ See [/plugins](/plugins) for more information and examples.
 
 ### Install Dependencies
 
-- poetry==1.8.5: https://python-poetry.org/docs/#installation
+- poetry >= 2: https://python-poetry.org/docs/#installation
 
 ### Create the venv
 

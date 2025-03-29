@@ -15,39 +15,34 @@ jobs:
     name: Build executable 🔨
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-latest, macos-latest, macos-13]
+        os: [ubuntu-22.04, windows-latest, macos-latest, macos-13]
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
 
-      - run: |
-          git fetch --prune --unshallow --tags
-          git checkout $(git describe --tags $(git rev-list --tags --max-count=1))
-
-      - run: pipx install poetry==1.8.5
+      - run: pipx install poetry
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
+      - run: pipx inject poetry poetry-dynamic-versioning
+
       - run: poetry install
 
-      - if: matrix.os != 'windows-latest'
-        run: |
-          shopt -s expand_aliases
-          . ./envr.ps1
-          build
-
-      - if: matrix.os == 'windows-latest'
-        run: |
-          . ./envr.ps1
-          build
+      - run: poetry run python -m portable
 
       - name: Get name of the portable build
         id: get_name
         shell: bash
         run: echo "BUILD_NAME=$(ls dist | grep smpmgr-.*\.zip)" >> $GITHUB_OUTPUT
+
+      - name: Upload artifact 📦
+        uses: actions/upload-artifact@v4
+        with:
+          path: dist/${{ steps.get_name.outputs.BUILD_NAME }}
+          name: ${{ steps.get_name.outputs.BUILD_NAME }}
 
       - name: Upload portable build 🚀
         if: github.event_name == 'release' && github.event.action == 'published'

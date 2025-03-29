@@ -1,24 +1,40 @@
-[tool.poetry]
+[project]
 name = "smpmgr"
-version = "0"
+dynamic = ["version"]
 description = "Simple Management Protocol (SMP) Manager for remotely managing MCU firmware"
-authors = ["J.P. Hutchins <jp@intercreate.io>"]
+authors = [
+    { name = "JP Hutchins", email = "jp@intercreate.io" }
+]
 readme = "README.md"
 license = "Apache-2.0"
+
+[tool.poetry]
 packages = [{ include = "smpmgr" }]
+version = "0.0.0"
 
 [tool.poetry.scripts]
 smpmgr = "smpmgr.main:app"
 
-[tool.poetry-version-plugin]
-source = "git-tag"
+[tool.poetry.requires-plugins]
+poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
+
+[tool.poetry-dynamic-versioning]
+strict = true
+enable = true
+vcs = "git"
+style = "semver"
+metadata = true
+tagged-metadata = true
+dirty = true
+fix-shallow-repository = true
+pattern = '(?P<base>\d+\.\d+\.\d+)'
+format-jinja = "{% if distance == 0 %}{{ base }}{% else %}{{ base }}-dev{{ distance }}+g{{ commit }}{% endif %}{% if dirty %}.dirty{% endif %}"
 
 [tool.poetry.dependencies]
 python = ">=3.10, <3.14"
 smpclient = "^4.4.0"
 typer = { extras = ["all"], version = "^0.9.0" }
 readchar = "^4.0.5"
-
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"
@@ -30,20 +46,33 @@ mypy = "^1.7.0"
 mypy-extensions = "^1.0.0"
 types-pyserial = "^3.5.0.11"
 pyinstaller = "^6.3.0"
-gitpython = "^3.1.41"
+poetry-dynamic-versioning = "^1.7.1"
 
 [tool.black]
 line-length = 100
 skip-string-normalization = true
+extend-exclude = '''
+/(
+    \.poetry
+)/
+'''
 
 [tool.isort]
 profile = "black"
 line_length = 100
 multi_line_output = 3
+extend_skip = [
+    ".poetry",
+]
+
 
 [tool.mypy]
 disallow_untyped_defs = true
-exclude = ['.venv', 'build', 'dist']
+exclude = ['.venv', 'build', 'dist', ".poetry"]
 
 [tool.pytest.ini_options]
 filterwarnings = ["ignore:The --rsyncdir:DeprecationWarning"]
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"

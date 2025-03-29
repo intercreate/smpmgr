@@ -2,5 +2,6 @@
 max-line-length = 100
 exclude = 
     .venv
+    .poetry
 extend-ignore =
     E203
