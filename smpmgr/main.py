@@ -191,7 +191,7 @@ def upgrade(
 
 
 @app.command()
-def shell() -> None:
+def interactive() -> None:
     """Open the `smpmgr` interactive shell. Type 'exit' or 'quit' to exit."""
 
     print("".join(HELP_LINES))
@@ -202,8 +202,8 @@ def shell() -> None:
 
         if args[0] in {"exit", "quit"}:
             break
-        if args[0] == "shell":
-            print("The 'shell' command cannot be used from within the shell.")
+        if args[0] == "interactive":
+            print("The 'interactive' command cannot be used from within the shell.")
             continue
 
         try:
