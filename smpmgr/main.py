@@ -18,7 +18,7 @@ from smpclient.requests.image_management import ImageStatesWrite
 from smpclient.requests.os_management import ResetWrite
 from typing_extensions import Annotated, assert_never
 
-from smpmgr import file_management, image_management, os_management, terminal
+from smpmgr import file_management, image_management, os_management, shell_management, terminal
 from smpmgr.common import (
     Options,
     TransportDefinition,
@@ -61,6 +61,7 @@ app.add_typer(os_management.app)
 app.add_typer(image_management.app)
 app.add_typer(file_management.app)
 app.add_typer(intercreate.app)
+app.command()(shell_management.shell)
 app.command()(terminal.terminal)
 
 for plugin in plugins:
