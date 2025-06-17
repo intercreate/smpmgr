@@ -12,6 +12,7 @@ from rich.progress import (
     BarColumn,
     DownloadColumn,
     Progress,
+    SpinnerColumn,
     TextColumn,
     TimeRemainingColumn,
     TransferSpeedColumn,
@@ -156,17 +157,34 @@ def upload(
 def download(
     ctx: typer.Context,
     file: Annotated[str, typer.Argument(help="The file on the SMP Server")],
-    destination: Annotated[Path, typer.Argument(help="The destination on the local filesystem")],
+    destination: Annotated[
+        Path | None,
+        typer.Argument(
+            help="The destination on the local filesystem. If not provided, the"
+            " file will be saved in the cwd with its original name."
+        ),
+    ] = None,
 ) -> None:
     """Download a file."""
 
     options = cast(Options, ctx.obj)
     smpclient = get_smpclient(options)
 
+    destination = Path(Path(file).name) if destination is None else destination
+
     async def f() -> None:
         await connect_with_spinner(smpclient, options.timeout)
-        with destination.open("wb") as dest_f:
+
+        with Progress(
+            SpinnerColumn(), TextColumn("[progress.description]{task.description}")
+        ) as progress:
+            download_task = progress.add_task(description=f"Downloading {file}", total=None)
             file_data = await smpclient.download_file(file)
-            dest_f.write(file_data)
+            progress.update(download_task, description=f"Downloaded {file}", completed=True)
+
+            save_task = progress.add_task(description=f"Saving {destination}", total=len(file_data))
+            with destination.open("wb") as dest_f:
+                dest_f.write(file_data)
+            progress.update(save_task, description=f"Saved {destination}", completed=True)
 
     asyncio.run(f())
