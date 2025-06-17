@@ -109,14 +109,16 @@ async def smp_request(
     options: Options,
     request: SMPRequest[TRep, TEr1, TEr2],
     description: str | None = None,
+    timeout_s: float | None = None,
 ) -> TRep | TEr1 | TEr2:
     with Progress(
         SpinnerColumn(), TextColumn("[progress.description]{task.description}")
     ) as progress:
         description = description or f"Waiting for response to {request.__class__.__name__}..."
+        timeout_s = timeout_s if timeout_s is not None else options.timeout
         task = progress.add_task(description=description, total=None)
         try:
-            r = await asyncio.wait_for(smpclient.request(request), timeout=options.timeout)
+            r = await smpclient.request(request, timeout_s)
             progress.update(task, description=f"{description} OK", completed=True)
             return r
         except asyncio.TimeoutError:
