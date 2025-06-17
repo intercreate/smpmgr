@@ -1,12 +1,13 @@
 import asyncio
 import shlex
 from typing import Annotated as A
-from typing import Final, assert_never, cast
+from typing import Final, cast
 
 import typer
 from rich import print as rich_print
 from smpclient.generics import error, success
 from smpclient.requests.shell_management import Execute
+from typing_extensions import assert_never
 
 from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
 
