@@ -1,4 +1,5 @@
 import asyncio
+import shlex
 from typing import Annotated as A
 from typing import Final, assert_never, cast
 
@@ -31,7 +32,7 @@ def shell(
         response: Final = await smp_request(
             smpclient,
             options,
-            Execute(argv=command.split(" ")),
+            Execute(argv=shlex.split(command)),
             f"Waiting response to {command}...",
             timeout_s=timeout,
         )
