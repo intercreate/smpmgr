@@ -88,7 +88,7 @@ async def connect_with_spinner(smpclient: SMPClient, timeout_s: float) -> None:
         connect_task_description = f"Connecting to {smpclient._address}..."
         connect_task = progress.add_task(description=connect_task_description, total=None)
         try:
-            await asyncio.wait_for(smpclient.connect(), timeout=timeout_s)
+            await smpclient.connect(timeout_s)
             progress.update(
                 connect_task, description=f"{connect_task_description} OK", completed=True
             )
