@@ -28,7 +28,7 @@ jobs:
 
       - run: pipx inject poetry poetry-dynamic-versioning
 
-      - run: poetry env use python3.12
+      - run: poetry env use python
 
       - run: poetry install
 
