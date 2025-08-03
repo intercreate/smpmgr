@@ -28,8 +28,6 @@ jobs:
 
       - run: poetry self add poetry-dynamic-versioning
 
-      - run: poetry env use python
-
       - run: poetry install
 
       - run: poetry run python -m portable
