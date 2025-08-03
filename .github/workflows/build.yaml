@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: pipx install poetry
+      - run: python -m pip install poetry
 
       - run: pipx inject poetry poetry-dynamic-versioning
 
