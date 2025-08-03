@@ -77,7 +77,8 @@ def options(
     ),
     ble: str = typer.Option(None, help="The Bluetooth address to connect to"),
     timeout: float = typer.Option(
-        2.0, help="Transport timeout in seconds; how long to wait for requests"
+        2.0,
+        help="Transport timeout in seconds; how long to wait for initial connection and requests.",
     ),
     mtu: int = typer.Option(
         4096,
