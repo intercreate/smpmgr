@@ -18,7 +18,14 @@ from smpclient.requests.image_management import ImageStatesWrite
 from smpclient.requests.os_management import ResetWrite
 from typing_extensions import Annotated, assert_never
 
-from smpmgr import file_management, image_management, os_management, shell_management, terminal
+from smpmgr import (
+    enumeration_management,
+    file_management,
+    image_management,
+    os_management,
+    shell_management,
+    terminal,
+)
 from smpmgr.common import (
     Options,
     TransportDefinition,
@@ -60,6 +67,7 @@ app: Final = typer.Typer(help="".join(HELP_LINES), rich_markup_mode="rich")
 app.add_typer(os_management.app)
 app.add_typer(image_management.app)
 app.add_typer(file_management.app)
+app.add_typer(enumeration_management.app)
 app.add_typer(intercreate.app)
 app.command()(shell_management.shell)
 app.command()(terminal.terminal)
@@ -77,8 +85,7 @@ def options(
     ),
     ble: str = typer.Option(None, help="The Bluetooth address to connect to"),
     timeout: float = typer.Option(
-        2.0,
-        help="Transport timeout in seconds; how long to wait for initial connection and requests.",
+        2.0, help="Transport timeout in seconds; how long to wait for requests"
     ),
     mtu: int = typer.Option(
         4096,
