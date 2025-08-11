@@ -80,11 +80,13 @@ def options(
         2.0,
         help="Transport timeout in seconds; how long to wait for initial connection and requests.",
     ),
-    mtu: int = typer.Option(
-        4096,
+    mtu: int
+    | None = typer.Option(
+        None,
         help=(
             "Maximum transmission unit supported by the SMP server serial transport."
-            "  Ignored for BLE transport since the BLE connection will report MTU."
+            " Will default to smpclient upstream value."
+            " Ignored for BLE transport since the BLE connection will report MTU."
         ),
     ),
     loglevel: LogLevel = typer.Option(None, help="Debug log level"),
