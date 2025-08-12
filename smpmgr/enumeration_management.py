@@ -25,15 +25,8 @@ def get_supported_groups(ctx: typer.Context) -> None:
 
     async def f() -> None:
         await connect_with_spinner(smpclient, options.timeout)
-
         r = await smp_request(smpclient, options, ListSupportedGroups(), "Waiting for supported groups...")  # type: ignore # noqa
-
-        if error(r):
-            print(r)
-        elif success(r):
-            print(r.groups)
-        else:
-            raise Exception("Unreachable")
+        print(r)
 
     asyncio.run(f())
 
@@ -50,14 +43,7 @@ def get_group_details(
 
     async def f() -> None:
         await connect_with_spinner(smpclient, options.timeout)
-
         r = await smp_request(smpclient, options, GroupDetails(groups=groups), "Waiting for group details...")  # type: ignore # noqa
-
-        if error(r):
-            print(r)
-        elif success(r):
-            print(r.groups)
-        else:
-            raise Exception("Unreachable")
+        print(r)
 
     asyncio.run(f())
