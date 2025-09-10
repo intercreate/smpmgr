@@ -89,6 +89,14 @@ def options(
             " Ignored for BLE transport since the BLE connection will report MTU."
         ),
     ),
+    baudrate: int
+    | None = typer.Option(
+        None,
+        help=(
+            "The baudrate of the serial port to connect to, e.g. 115200."
+            " Will default to smpclient upstream value."
+        ),
+    ),
     loglevel: LogLevel = typer.Option(None, help="Debug log level"),
     logfile: Path = typer.Option(None, help="Log file path"),
     version: Annotated[bool, typer.Option("--version", help="Show the version and exit.")] = False,
@@ -108,7 +116,10 @@ def options(
     setup_logging(loglevel, logfile)
 
     ctx.obj = Options(
-        timeout=timeout, transport=TransportDefinition(port=port, ble=ble, ip=ip), mtu=mtu
+        timeout=timeout,
+        transport=TransportDefinition(port=port, ble=ble, ip=ip),
+        mtu=mtu,
+        baudrate=baudrate,
     )
     logger.info(ctx.obj)
 
