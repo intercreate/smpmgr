@@ -3,11 +3,12 @@
 import asyncio
 import logging
 from dataclasses import dataclass, fields
-from typing import Type, TypeVar
+from typing import List, Type, TypeVar
 
 import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from serial import SerialException
+from smp import header as smpheader
 from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import SMPRequest, TEr1, TEr2, TRep
@@ -35,6 +36,7 @@ class Options:
     timeout: float
     transport: TransportDefinition
     mtu: int | None
+    forward_tree: List[int]
 
 
 def get_custom_smpclient(options: Options, smp_client_cls: Type[TSMPClient]) -> TSMPClient:
@@ -112,6 +114,17 @@ async def smp_request(
         description = description or f"Waiting for response to {request.__class__.__name__}..."
         timeout_s = timeout_s if timeout_s is not None else options.timeout
         task = progress.add_task(description=description, total=None)
+        if options.forward_tree:
+            new_req = request.model_dump()
+            new_header_data = request.header.__dict__.copy()
+            new_header_data['flags'] = smpheader.Flag.FORWARD_TREE
+            new_header_data['length'] = request.header.length + smpheader.ForwardTree.SIZE
+            del new_header_data['_bytes']
+            new_req['header'] = new_header_data
+            new_req['forward_tree'] = smpheader.ForwardTree(options.forward_tree)
+            del new_req['smp_data']
+            del new_req['sequence']
+            request = request.__class__(**new_req)
         try:
             r = await smpclient.request(request, timeout_s)
             progress.update(task, description=f"{description} OK", completed=True)
