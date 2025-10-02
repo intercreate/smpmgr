@@ -18,7 +18,7 @@ from smpclient.requests.image_management import ImageStatesWrite
 from smpclient.requests.os_management import ResetWrite
 from typing_extensions import Annotated, assert_never
 
-from smpmgr import file_management, image_management, os_management, shell_management, terminal
+from smpmgr import file_management, image_management, os_management, shell_management, terminal, stat_management
 from smpmgr.common import (
     Options,
     TransportDefinition,
@@ -27,7 +27,7 @@ from smpmgr.common import (
     smp_request,
 )
 from smpmgr.image_management import upload_with_progress_bar
-from smpmgr.logging import LogLevel, setup_logging
+from smpmgr.smp_logging_config import LogLevel, setup_logging
 from smpmgr.plugins import get_plugins
 from smpmgr.user import intercreate
 
@@ -58,6 +58,7 @@ typer.rich_utils.STYLE_HELPTEXT = ""
 
 app: Final = typer.Typer(help="".join(HELP_LINES), rich_markup_mode="rich")
 app.add_typer(os_management.app)
+app.add_typer(stat_management.app)
 app.add_typer(image_management.app)
 app.add_typer(file_management.app)
 app.add_typer(intercreate.app)
