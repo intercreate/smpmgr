@@ -3,7 +3,7 @@
 import asyncio
 import logging
 from dataclasses import dataclass, fields
-from typing import Type, TypeVar
+from typing import Type, TypedDict, TypeVar
 
 import typer
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -35,6 +35,14 @@ class Options:
     timeout: float
     transport: TransportDefinition
     mtu: int | None
+    baudrate: int | None
+
+
+class SMPSerialTransportKwargs(TypedDict, total=False):
+    max_smp_encoded_frame_size: int
+    line_length: int
+    line_buffers: int
+    baudrate: int
 
 
 def get_custom_smpclient(options: Options, smp_client_cls: Type[TSMPClient]) -> TSMPClient:
@@ -43,15 +51,14 @@ def get_custom_smpclient(options: Options, smp_client_cls: Type[TSMPClient]) -> 
         logger.info(
             f"Initializing SMPClient with the SMPSerialTransport, {options.transport.port=}"
         )
+        kwargs: SMPSerialTransportKwargs = {}
         if options.mtu is not None:
-            return smp_client_cls(
-                SMPSerialTransport(
-                    max_smp_encoded_frame_size=options.mtu, line_length=options.mtu, line_buffers=1
-                ),
-                options.transport.port,
-            )
-        else:
-            return smp_client_cls(SMPSerialTransport(), options.transport.port)
+            kwargs['max_smp_encoded_frame_size'] = options.mtu
+            kwargs['line_length'] = options.mtu
+            kwargs['line_buffers'] = 1
+        if options.baudrate is not None:
+            kwargs['baudrate'] = options.baudrate
+        return smp_client_cls(SMPSerialTransport(**kwargs), options.transport.port)
     elif options.transport.ble is not None:
         logger.info(f"Initializing SMPClient with the SMPBLETransport, {options.transport.ble=}")
         return smp_client_cls(
