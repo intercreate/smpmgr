@@ -2,9 +2,7 @@
 name = "smpmgr"
 dynamic = ["version"]
 description = "Simple Management Protocol (SMP) Manager for remotely managing MCU firmware"
-authors = [
-    { name = "JP Hutchins", email = "jp@intercreate.io" }
-]
+authors = [{ name = "JP Hutchins", email = "jp@intercreate.io" }]
 readme = "README.md"
 license = "Apache-2.0"
 
@@ -28,11 +26,11 @@ tagged-metadata = true
 dirty = true
 fix-shallow-repository = true
 pattern = '(?P<base>\d+\.\d+\.\d+)'
-format-jinja = "{% if distance == 0 %}{{ base }}{% else %}{{ base }}-dev{{ distance }}+g{{ commit }}{% endif %}{% if dirty %}.dirty{% endif %}"
+format-jinja = "{% if distance == 0 %}{{ base }}{% if dirty %}+dirty{% endif %}{% else %}{{ base }}-dev{{ distance }}+g{{ commit }}{% if dirty %}.dirty{% endif %}{% endif %}"
 
 [tool.poetry.dependencies]
-python = ">=3.10, <3.14"
-smpclient = "^5.0.0"
+python = ">=3.10, <4"
+smpclient = "^5.1.1"
 typer = { extras = ["all"], version = "^0.16.0" }
 readchar = "^4.0.5"
 
@@ -45,7 +43,7 @@ isort = "^5.12.0"
 mypy = "^1.7.0"
 mypy-extensions = "^1.0.0"
 types-pyserial = "^3.5.0.11"
-pyinstaller = "^6.3.0"
+pyinstaller = { version = "^6.3.0", python = "<3.15" }
 poetry-dynamic-versioning = "^1.7.1"
 
 [tool.black]
@@ -61,10 +59,7 @@ extend-exclude = '''
 profile = "black"
 line_length = 100
 multi_line_output = 3
-extend_skip = [
-    ".poetry",
-]
-
+extend_skip = [".poetry"]
 
 [tool.mypy]
 disallow_untyped_defs = true
