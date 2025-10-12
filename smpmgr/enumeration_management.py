@@ -6,7 +6,6 @@ from typing import List, cast
 
 import typer
 from rich import print
-from smpclient.generics import error, success
 from smpclient.requests.enumeration_management import GroupDetails, ListSupportedGroups
 from typing_extensions import Annotated
 
