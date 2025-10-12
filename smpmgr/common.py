@@ -60,7 +60,10 @@ def get_custom_smpclient(options: Options, smp_client_cls: Type[TSMPClient]) -> 
         )
     elif options.transport.ip is not None:
         logger.info(f"Initializing SMPClient with the SMPUDPTransport, {options.transport.ip=}")
-        return smp_client_cls(SMPUDPTransport(), options.transport.ip)
+        if options.mtu is not None:
+            return smp_client_cls(SMPUDPTransport(mtu=options.mtu), options.transport.ip)
+        else:
+            return smp_client_cls(SMPUDPTransport(), options.transport.ip)
     else:
         typer.echo(
             f"A transport option is required; "
