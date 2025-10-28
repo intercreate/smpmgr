@@ -1302,14 +1302,14 @@ pydantic = ">=2.6,<3.0"
 
 [[package]]
 name = "smpclient"
-version = "5.1.1"
+version = "5.1.2"
 description = "Simple Management Protocol (SMP) Client for remotely managing MCU firmware"
 optional = false
 python-versions = "<4,>=3.9"
 groups = ["main"]
 files = [
-    {file = "smpclient-5.1.1-py3-none-any.whl", hash = "sha256:f73d5c2a2f3e25da14aa0beb973ce82ca0ae2f3ac6baee015cd49ab469f5cc66"},
-    {file = "smpclient-5.1.1.tar.gz", hash = "sha256:559440479a92a66c37108f1f9614c609db91f5f0b810fbab2db1d68062ee372a"},
+    {file = "smpclient-5.1.2-py3-none-any.whl", hash = "sha256:79ebdfe6594889f128da35724b0dff46820b12572527e2e41b26fe1dc0a42802"},
+    {file = "smpclient-5.1.2.tar.gz", hash = "sha256:6000eaae5d6875bc9f482ecd1726bbc9334d62278754ed08c343ab05144f9e56"},
 ]
 
 [package.dependencies]
@@ -1729,4 +1729,4 @@ all = ["winrt-Windows.Foundation.Collections[all] (>=3.2.1.0,<3.3.0.0)", "winrt-
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10, <4"
-content-hash = "a83529e7b439bda8802c01b62e3ca9a343137ca6a36eaa0b4a176339c16fd8b8"
+content-hash = "cc14c309cecb1fae262315e261b51c555f1a0c4dedcdd1aab2a0b6312549446a"
