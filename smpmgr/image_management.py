@@ -20,7 +20,7 @@ from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import error, success
 from smpclient.mcuboot import ImageInfo
-from smpclient.requests.image_management import ImageStatesRead, ImageStatesWrite
+from smpclient.requests.image_management import ImageErase, ImageStatesRead, ImageStatesWrite
 from typing_extensions import Annotated
 
 from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
@@ -76,6 +76,36 @@ def state_write(
             options,
             ImageStatesWrite(hash=hash_bytes, confirm=confirm),
             "Waiting for image state write...",
+        )
+
+        if error(r):
+            print(r)
+        elif success(r):
+            pass
+        else:
+            raise Exception("Unreachable")
+
+    asyncio.run(f())
+
+
+@app.command()
+def erase(
+    ctx: typer.Context,
+    slot: Annotated[
+        int,
+        typer.Option(help="Image slot to erase, as displayed by image state-read (0-indexed)"),
+    ],
+) -> None:
+    """Request to erase an image slot on the SMP Server."""
+
+    options = cast(Options, ctx.obj)
+    smpclient = get_smpclient(options)
+
+    async def f() -> None:
+        await connect_with_spinner(smpclient, options.timeout)
+
+        r = await smp_request(
+            smpclient, options, ImageErase(slot=slot), "Waiting for image erase..."
         )
 
         if error(r):
