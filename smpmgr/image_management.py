@@ -63,14 +63,31 @@ def state_read(ctx: typer.Context) -> None:
 @app.command()
 def state_write(
     ctx: typer.Context,
-    hash: Annotated[str, typer.Argument(help="SHA256 hash of the image header and body.")],
-    confirm: Annotated[bool, typer.Argument(help="Confirm the image given by hash.")],
+    hash: Annotated[
+        str | None,
+        typer.Argument(
+            help="SHA256 hash of the image to mark for test swap "
+            "and/or confirm ([red]caution[/red])."
+        ),
+    ] = None,
+    confirm: Annotated[
+        bool,
+        typer.Option(
+            "--confirm",
+            help="Confirm the image given by hash if it was provided, "
+            "else the first image (the running image). [red]CAUTION[/red]: It is recommended "
+            "to only confirm an image that has already booted, which can be "
+            "guaranteed by sending this command to an SMP server running in that "
+            "application image (NOT the bootloader), and NOT providing the hash "
+            "argument.",
+        ),
+    ] = False,
 ) -> None:
     """Request to write the state of FW images on the SMP Server."""
 
     options = cast(Options, ctx.obj)
     smpclient = get_smpclient(options)
-    hash_bytes = bytes.fromhex(hash)
+    hash_bytes = bytes.fromhex(hash) if hash is not None else None
 
     async def f() -> None:
         await connect_with_spinner(smpclient, options.timeout)
