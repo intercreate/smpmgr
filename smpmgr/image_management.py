@@ -20,7 +20,11 @@ from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import error, success
 from smpclient.mcuboot import ImageInfo
-from smpclient.requests.image_management import ImageErase, ImageStatesRead, ImageStatesWrite
+from smpclient.requests.image_management import (
+    ImageErase,
+    ImageStatesRead,
+    ImageStatesWrite,
+)
 from typing_extensions import Annotated
 
 from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
@@ -93,7 +97,7 @@ def erase(
     ctx: typer.Context,
     slot: Annotated[
         int,
-        typer.Option(help="Image slot to erase, as displayed by image state-read (0-indexed)"),
+        typer.Argument(help="Image slot to erase, as displayed by image state-read (0-indexed)"),
     ],
 ) -> None:
     """Request to erase an image slot on the SMP Server."""
