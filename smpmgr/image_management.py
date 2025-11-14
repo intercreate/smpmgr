@@ -20,11 +20,7 @@ from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import error, success
 from smpclient.mcuboot import ImageInfo
-from smpclient.requests.image_management import (
-    ImageErase,
-    ImageStatesRead,
-    ImageStatesWrite,
-)
+from smpclient.requests.image_management import ImageErase, ImageStatesRead, ImageStatesWrite
 from typing_extensions import Annotated
 
 from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
