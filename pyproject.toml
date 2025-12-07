@@ -30,7 +30,7 @@ format-jinja = "{% if distance == 0 %}{{ base }}{% if dirty %}+dirty{% endif %}{
 
 [tool.poetry.dependencies]
 python = ">=3.10, <4"
-smpclient = "^5.2.0"
+smpclient = {git = "https://github.com/intercreate/smpclient", rev = "82fe4cce5cf69d6cc9a26cde1fc00c645ba8f07d"}
 typer = { extras = ["all"], version = "^0.16.0" }
 readchar = "^4.0.5"
 
