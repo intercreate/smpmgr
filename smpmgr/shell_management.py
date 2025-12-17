@@ -17,7 +17,7 @@ def shell(
     command: str = typer.Argument(
         help="Command string to run, e.g. \"gpio conf gpio@49000000 0 i\""
     ),
-    timeout: float = typer.Option(2.0, help="Timeout in seconds for the command to complete"),
+    timeout: float | None = typer.Option(None, help="Timeout in seconds for the command to complete"),
     verbose: A[
         bool, typer.Option("--verbose", help="Print the raw success response")  # noqa: F821,F722
     ] = False,
