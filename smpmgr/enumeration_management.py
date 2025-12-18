@@ -24,7 +24,7 @@ def get_supported_groups(ctx: typer.Context) -> None:
 
     async def f() -> None:
         await connect_with_spinner(smpclient)
-        r = await smp_request(smpclient, options, ListSupportedGroups(), "Waiting for supported groups...")  # type: ignore # noqa
+        r = await smp_request(smpclient, ListSupportedGroups(), "Waiting for supported groups...")  # type: ignore # noqa
         print(r)
 
     asyncio.run(f())
@@ -42,7 +42,7 @@ def get_group_details(
 
     async def f() -> None:
         await connect_with_spinner(smpclient)
-        r = await smp_request(smpclient, options, GroupDetails(groups=groups), "Waiting for group details...")  # type: ignore # noqa
+        r = await smp_request(smpclient, GroupDetails(groups=groups), "Waiting for group details...")  # type: ignore # noqa
         print(r)
 
     asyncio.run(f())

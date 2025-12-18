@@ -219,9 +219,7 @@ def upgrade(
         if slot != 0 or confirm:
             if bypass_inspect:
                 # Read hash from device since we skipped local image inspection
-                r = await smp_request(
-                    smpclient, options, ImageStatesRead(), "Waiting for image states..."
-                )
+                r = await smp_request(smpclient, ImageStatesRead(), "Waiting for image states...")
 
                 if error(r):
                     print(r)
@@ -244,7 +242,6 @@ def upgrade(
 
             image_states_response = await smp_request(
                 smpclient,
-                options,
                 ImageStatesWrite(hash=image_hash, confirm=confirm),
                 "Marking uploaded image for permanent upgrade..."
                 if confirm
@@ -258,7 +255,7 @@ def upgrade(
             else:
                 assert_never(image_states_response)
 
-        reset_response = await smp_request(smpclient, options, ResetWrite())
+        reset_response = await smp_request(smpclient, ResetWrite())
         if success(reset_response):
             pass
         elif error(reset_response):

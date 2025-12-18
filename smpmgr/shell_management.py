@@ -32,7 +32,6 @@ def shell(
 
         response: Final = await smp_request(
             smpclient,
-            options,
             Execute(argv=shlex.split(command)),
             f"Waiting response to {command}...",
             timeout_s=timeout,

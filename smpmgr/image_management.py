@@ -38,7 +38,7 @@ def state_read(ctx: typer.Context) -> None:
     async def f() -> None:
         await connect_with_spinner(smpclient)
 
-        r = await smp_request(smpclient, options, ImageStatesRead(), "Waiting for image states...")
+        r = await smp_request(smpclient, ImageStatesRead(), "Waiting for image states...")
 
         if error(r):
             print(r)
@@ -94,7 +94,6 @@ def state_write(
 
         r = await smp_request(
             smpclient,
-            options,
             ImageStatesWrite(hash=hash_bytes, confirm=confirm),
             "Waiting for image state write...",
         )
@@ -126,7 +125,7 @@ def erase(
         await connect_with_spinner(smpclient)
 
         r = await smp_request(
-            smpclient, options, ImageErase(slot=slot), "Waiting for image erase..."
+            smpclient, ImageErase(slot=slot), "Waiting for image erase..."
         )
 
         if error(r):

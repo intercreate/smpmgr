@@ -43,7 +43,7 @@ def get_supported_hash_types(ctx: typer.Context) -> None:
     async def f() -> None:
         await connect_with_spinner(smpclient)
 
-        r = await smp_request(smpclient, options, SupportedFileHashChecksumTypes(), "Waiting for supported hash types...")  # type: ignore # noqa
+        r = await smp_request(smpclient, SupportedFileHashChecksumTypes(), "Waiting for supported hash types...")  # type: ignore # noqa
 
         if error(r):
             print(r)
@@ -67,7 +67,7 @@ def get_hash(
     async def f() -> None:
         await connect_with_spinner(smpclient)
 
-        r = await smp_request(smpclient, options, FileHashChecksum(name=file), "Waiting for hash...")  # type: ignore # noqa
+        r = await smp_request(smpclient, FileHashChecksum(name=file), "Waiting for hash...")  # type: ignore # noqa
 
         if error(r) or success(r):
             print(r)
@@ -89,7 +89,7 @@ def read_size(
     async def f() -> None:
         await connect_with_spinner(smpclient)
 
-        r = await smp_request(smpclient, options, FileStatus(name=file), "Waiting for file size...")  # type: ignore # noqa
+        r = await smp_request(smpclient, FileStatus(name=file), "Waiting for file size...")  # type: ignore # noqa
 
         if error(r):
             print(r)

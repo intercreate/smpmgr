@@ -112,7 +112,6 @@ async def connect_with_spinner(smpclient: SMPClient) -> None:
 
 async def smp_request(
     smpclient: SMPClient,
-    options: Options,
     request: SMPRequest[TRep, TEr1, TEr2],
     description: str | None = None,
     timeout_s: float | None = None,
@@ -121,7 +120,6 @@ async def smp_request(
         SpinnerColumn(), TextColumn("[progress.description]{task.description}")
     ) as progress:
         description = description or f"Waiting for response to {request.__class__.__name__}..."
-        timeout_s = timeout_s if timeout_s is not None else options.timeout
         task = progress.add_task(description=description, total=None)
         try:
             r = await smpclient.request(request, timeout_s)
