@@ -4,7 +4,7 @@ import asyncio
 import logging
 from io import BufferedReader
 from pathlib import Path
-from typing import cast
+from typing import Annotated, cast
 
 import typer
 from rich import print
@@ -21,7 +21,6 @@ from smpclient import SMPClient
 from smpclient.generics import error, success
 from smpclient.mcuboot import ImageInfo
 from smpclient.requests.image_management import ImageErase, ImageStatesRead, ImageStatesWrite
-from typing_extensions import Annotated
 
 from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
 
@@ -59,14 +58,36 @@ def state_read(ctx: typer.Context) -> None:
 @app.command()
 def state_write(
     ctx: typer.Context,
-    hash: Annotated[str, typer.Argument(help="SHA256 hash of the image header and body.")],
-    confirm: Annotated[bool, typer.Argument(help="Confirm the image given by hash.")],
+    hash: Annotated[
+        str | None,
+        typer.Argument(
+            help="SHA256 hash of the image to mark for test on next reboot. "
+            "MCUboot will temporarily swap to this image on the next reset. "
+            "If the image boots successfully, use --confirm (or some other mechanism) to make it "
+            "permanent (otherwise it will revert after another reset)."
+        ),
+    ] = None,
+    confirm: Annotated[
+        bool,
+        typer.Option(
+            "--confirm",
+            help="Permanently confirm an image (prevent revert/rollback). "
+            "Without HASH: confirms the currently running image (safe). "
+            "With HASH: confirms a different image without testing (dangerous). "
+            "[red]WARNING[/red]: Confirming an untested image can brick your device "
+            "if it fails to boot. "
+            "Best practice: always test first by marking for test swap, "
+            "rebooting to verify the image works, "
+            "then confirm the running image with 'smpmgr image state-write --confirm' "
+            "(or some other mechanism).",
+        ),
+    ] = False,
 ) -> None:
     """Request to write the state of FW images on the SMP Server."""
 
     options = cast(Options, ctx.obj)
     smpclient = get_smpclient(options)
-    hash_bytes = bytes.fromhex(hash)
+    hash_bytes = bytes.fromhex(hash) if hash is not None else None
 
     async def f() -> None:
         await connect_with_spinner(smpclient, options.timeout)
