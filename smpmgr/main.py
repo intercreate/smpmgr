@@ -168,7 +168,7 @@ def upgrade(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
         with open(file, "rb") as f:
             await upload_with_progress_bar(smpclient, f, slot)

@@ -28,7 +28,7 @@ def shell(
     smpclient: Final = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
         response: Final = await smp_request(
             smpclient,
