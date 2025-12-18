@@ -177,7 +177,6 @@ def upgrade(
             # mark the new image for testing (swap)
             image_states_response = await smp_request(
                 smpclient,
-                options,
                 ImageStatesWrite(hash=image_tlv_sha256.value),
                 "Marking uploaded image for test upgrade...",
             )
@@ -189,7 +188,7 @@ def upgrade(
             else:
                 assert_never(image_states_response)
 
-        reset_response = await smp_request(smpclient, options, ResetWrite())
+        reset_response = await smp_request(smpclient, ResetWrite())
         if success(reset_response):
             pass
         elif error(reset_response):
