@@ -22,7 +22,7 @@ def list_stats(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
         r = await smp_request(smpclient, options, ListOfGroups())  # type: ignore
 
         if verbose:
@@ -51,7 +51,7 @@ def smp_svr_stats(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
         r = await smp_request(smpclient, options, GroupData(name="smp_svr_stats"))
         print(r)
 
@@ -68,7 +68,7 @@ def get_group(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
         r = await smp_request(smpclient, options, GroupData(name=group_id))
         print(r)
 
@@ -86,7 +86,7 @@ def fetch_all_groups(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
         list_response = await smp_request(smpclient, options, ListOfGroups())  # type: ignore
 
