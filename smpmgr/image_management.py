@@ -4,7 +4,7 @@ import asyncio
 import logging
 from io import BufferedReader
 from pathlib import Path
-from typing import cast
+from typing import Annotated, cast
 
 import typer
 from rich import print
@@ -20,12 +20,7 @@ from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import error, success
 from smpclient.mcuboot import ImageInfo
-from smpclient.requests.image_management import (
-    ImageErase,
-    ImageStatesRead,
-    ImageStatesWrite,
-)
-from typing_extensions import Annotated
+from smpclient.requests.image_management import ImageErase, ImageStatesRead, ImageStatesWrite
 
 from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
 
@@ -66,20 +61,25 @@ def state_write(
     hash: Annotated[
         str | None,
         typer.Argument(
-            help="SHA256 hash of the image to mark for test swap "
-            "and/or confirm ([red]caution[/red])."
+            help="SHA256 hash of the image to mark for test on next reboot. "
+            "MCUboot will temporarily swap to this image on the next reset. "
+            "If the image boots successfully, use --confirm (or some other mechanism) to make it "
+            "permanent (otherwise it will revert after another reset)."
         ),
     ] = None,
     confirm: Annotated[
         bool,
         typer.Option(
             "--confirm",
-            help="Confirm the image given by hash if it was provided, "
-            "else the first image (the running image). [red]CAUTION[/red]: It is recommended "
-            "to only confirm an image that has already booted, which can be "
-            "guaranteed by sending this command to an SMP server running in that "
-            "application image (NOT the bootloader), and NOT providing the hash "
-            "argument.",
+            help="Permanently confirm an image (prevent revert/rollback). "
+            "Without HASH: confirms the currently running image (safe). "
+            "With HASH: confirms a different image without testing (dangerous). "
+            "[red]WARNING[/red]: Confirming an untested image can brick your device "
+            "if it fails to boot. "
+            "Best practice: always test first by marking for test swap, "
+            "rebooting to verify the image works, "
+            "then confirm the running image with 'smpmgr image state-write --confirm' "
+            "(or some other mechanism).",
         ),
     ] = False,
 ) -> None:
