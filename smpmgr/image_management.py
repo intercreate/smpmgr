@@ -124,9 +124,7 @@ def erase(
     async def f() -> None:
         await connect_with_spinner(smpclient)
 
-        r = await smp_request(
-            smpclient, ImageErase(slot=slot), "Waiting for image erase..."
-        )
+        r = await smp_request(smpclient, ImageErase(slot=slot), "Waiting for image erase...")
 
         if error(r):
             print(r)
