@@ -1,5 +1,6 @@
 [project]
 name = "smpmgr"
+version = "0.16.0+forward-tree"
 dynamic = ["version"]
 description = "Simple Management Protocol (SMP) Manager for remotely managing MCU firmware"
 authors = [{ name = "JP Hutchins", email = "jp@intercreate.io" }]
