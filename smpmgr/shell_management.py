@@ -17,7 +17,8 @@ def shell(
     command: str = typer.Argument(
         help="Command string to run, e.g. \"gpio conf gpio@49000000 0 i\""
     ),
-    timeout: float = typer.Option(2.0, help="Timeout in seconds for the command to complete"),
+    timeout: float
+    | None = typer.Option(None, help="Timeout in seconds for the command to complete"),
     verbose: A[
         bool, typer.Option("--verbose", help="Print the raw success response")  # noqa: F821,F722
     ] = False,
@@ -28,11 +29,10 @@ def shell(
     smpclient: Final = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
         response: Final = await smp_request(
             smpclient,
-            options,
             Execute(argv=shlex.split(command)),
             f"Waiting response to {command}...",
             timeout_s=timeout,

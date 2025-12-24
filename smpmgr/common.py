@@ -58,19 +58,22 @@ def get_custom_smpclient(options: Options, smp_client_cls: Type[TSMPClient]) -> 
             kwargs['line_buffers'] = 1
         if options.baudrate is not None:
             kwargs['baudrate'] = options.baudrate
-        return smp_client_cls(SMPSerialTransport(**kwargs), options.transport.port)
+        return smp_client_cls(SMPSerialTransport(**kwargs), options.transport.port, options.timeout)
     elif options.transport.ble is not None:
         logger.info(f"Initializing SMPClient with the SMPBLETransport, {options.transport.ble=}")
         return smp_client_cls(
             SMPBLETransport(),
             options.transport.ble,
+            options.timeout,
         )
     elif options.transport.ip is not None:
         logger.info(f"Initializing SMPClient with the SMPUDPTransport, {options.transport.ip=}")
         if options.mtu is not None:
-            return smp_client_cls(SMPUDPTransport(mtu=options.mtu), options.transport.ip)
+            return smp_client_cls(
+                SMPUDPTransport(mtu=options.mtu), options.transport.ip, options.timeout
+            )
         else:
-            return smp_client_cls(SMPUDPTransport(), options.transport.ip)
+            return smp_client_cls(SMPUDPTransport(), options.transport.ip, options.timeout)
     else:
         typer.echo(
             f"A transport option is required; "
@@ -85,7 +88,7 @@ def get_smpclient(options: Options) -> SMPClient:
     return get_custom_smpclient(options, SMPClient)
 
 
-async def connect_with_spinner(smpclient: SMPClient, timeout_s: float) -> None:
+async def connect_with_spinner(smpclient: SMPClient) -> None:
     """Spin while connecting to the SMP Server; raises `typer.Exit` if connection fails."""
     with Progress(
         SpinnerColumn(), TextColumn("[progress.description]{task.description}")
@@ -93,7 +96,7 @@ async def connect_with_spinner(smpclient: SMPClient, timeout_s: float) -> None:
         connect_task_description = f"Connecting to {smpclient._address}..."
         connect_task = progress.add_task(description=connect_task_description, total=None)
         try:
-            await smpclient.connect(timeout_s)
+            await smpclient.connect()
             progress.update(
                 connect_task, description=f"{connect_task_description} OK", completed=True
             )
@@ -111,7 +114,6 @@ async def connect_with_spinner(smpclient: SMPClient, timeout_s: float) -> None:
 
 async def smp_request(
     smpclient: SMPClient,
-    options: Options,
     request: SMPRequest[TRep, TEr1, TEr2],
     description: str | None = None,
     timeout_s: float | None = None,
@@ -120,7 +122,6 @@ async def smp_request(
         SpinnerColumn(), TextColumn("[progress.description]{task.description}")
     ) as progress:
         description = description or f"Waiting for response to {request.__class__.__name__}..."
-        timeout_s = timeout_s if timeout_s is not None else options.timeout
         task = progress.add_task(description=description, total=None)
         try:
             r = await smpclient.request(request, timeout_s)

@@ -36,9 +36,9 @@ def state_read(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
-        r = await smp_request(smpclient, options, ImageStatesRead(), "Waiting for image states...")
+        r = await smp_request(smpclient, ImageStatesRead(), "Waiting for image states...")
 
         if error(r):
             print(r)
@@ -90,11 +90,10 @@ def state_write(
     hash_bytes = bytes.fromhex(hash) if hash is not None else None
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
         r = await smp_request(
             smpclient,
-            options,
             ImageStatesWrite(hash=hash_bytes, confirm=confirm),
             "Waiting for image state write...",
         )
@@ -123,11 +122,9 @@ def erase(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
-        r = await smp_request(
-            smpclient, options, ImageErase(slot=slot), "Waiting for image erase..."
-        )
+        r = await smp_request(smpclient, ImageErase(slot=slot), "Waiting for image erase...")
 
         if error(r):
             print(r)
@@ -191,7 +188,7 @@ def upload(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
         with open(file, "rb") as f:
             await upload_with_progress_bar(smpclient, f, slot)
 
