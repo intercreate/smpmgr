@@ -147,6 +147,28 @@ def upgrade(
     ctx: typer.Context,
     file: Annotated[Path, typer.Argument(help="Path to FW image")],
     slot: Annotated[int, typer.Option(help="The image slot to upload to")] = 0,
+    confirm: Annotated[
+        bool,
+        typer.Option(
+            "--confirm",
+            help="Permanently confirm the image (prevent revert/rollback). "
+            "Without this flag (default): the image is marked for test swap, and MCUboot will "
+            "revert to the previous image if the new image fails to boot or is not confirmed. "
+            "With this flag: the image is immediately marked as permanent, bypassing MCUboot's "
+            "test/revert safety mechanism. "
+            "[red]WARNING[/red]: Using --confirm skips the test boot and can brick your device. "
+            "[bold]Only use this flag in development scenarios where recovery is possible[/bold], "
+            "such as: MCUboot has serial recovery enabled and you have access to the physical "
+            "serial interface; JTAG/SWD debug headers are exposed and not locked; "
+            "or you have another reliable recovery mechanism. "
+            "[red]DO NOT[/red] use --confirm in production or field deployments where physical "
+            "access for recovery is not available. "
+            "Best practice: always test first by marking for test swap, "
+            "rebooting to verify the image works, "
+            "then confirm the running image with 'smpmgr image state-write --confirm' "
+            "(or some other mechanism).",
+        ),
+    ] = False,
 ) -> None:
     """Upload a FW image, mark it for next boot, and reset the device."""
 
@@ -173,13 +195,14 @@ def upgrade(
         with open(file, "rb") as f:
             await upload_with_progress_bar(smpclient, f, slot)
 
-        if slot != 0:
-            # mark the new image for testing (swap)
+        if slot != 0 or confirm:
             image_states_response = await smp_request(
                 smpclient,
                 options,
-                ImageStatesWrite(hash=image_tlv_sha256.value),
-                "Marking uploaded image for test upgrade...",
+                ImageStatesWrite(hash=image_tlv_sha256.value, confirm=confirm),
+                "Marking uploaded image for permanent upgrade..."
+                if confirm
+                else "Marking uploaded image for test upgrade...",
             )
             if success(image_states_response):
                 pass
