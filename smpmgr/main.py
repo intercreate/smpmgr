@@ -1,11 +1,12 @@
 """Entry point for the `smpmgr` application."""
 
+import ast
 import asyncio
 import logging
 import sys
 from importlib.metadata import version as get_version
 from pathlib import Path
-from typing import Final, cast
+from typing import Final, List, cast
 
 import typer
 import typer.rich_utils
@@ -78,6 +79,34 @@ for plugin in plugins:
     app.add_typer(plugin.app)
 
 
+def parse_list_callback(ctx: typer.Context, param: typer.CallbackParam, value: List[str]) -> List[int]:
+    """
+    Callback function to parse a string representation of a list into integers.
+    Designed to work with Typer's callback system.
+    """
+    if not value:
+        return []
+
+    # Extract the first element as Typer passes values as a list
+    input_str = value[0]
+
+    try:
+        # Parse the string using ast.literal_eval for safety
+        parsed = ast.literal_eval(input_str)
+        if not isinstance(parsed, list):
+            raise typer.BadParameter("Input must be a valid list enclosed in brackets")
+
+        # Validate all elements are integers
+        for item in parsed:
+            if not isinstance(item, int):
+                raise typer.BadParameter(f"All elements must be integers. Found: {item}")
+
+        return parsed
+
+    except (ValueError, SyntaxError) as e:
+        raise typer.BadParameter(f"Invalid list format: {input_str}. Use Python list syntax like '[1, 2, 3, 4]'") from e
+
+
 @app.callback(invoke_without_command=True)
 def options(
     ctx: typer.Context,
@@ -112,6 +141,14 @@ def options(
     plugin_path: Path = typer.Option(
         None, help="Path to plugin directory. May be used more than once."
     ),
+    forward_tree: Annotated[
+        List[str],
+        typer.Option(
+            "--forward-tree",
+            callback=parse_list_callback,
+            parser=lambda x: x,
+            help="List of integers as a string (e.g., '[1, 2, 3, 4]')"
+        )] = None,
 ) -> None:
     if plugin_path:
         raise ValueError(
@@ -129,6 +166,7 @@ def options(
         transport=TransportDefinition(port=port, ble=ble, ip=ip),
         mtu=mtu,
         baudrate=baudrate,
+        forward_tree=forward_tree,
     )
     logger.info(ctx.obj)
 
