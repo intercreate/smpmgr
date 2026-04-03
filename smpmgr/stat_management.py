@@ -22,8 +22,8 @@ def list_stats(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
-        r = await smp_request(smpclient, options, ListOfGroups())  # type: ignore
+        await connect_with_spinner(smpclient)
+        r = await smp_request(smpclient, ListOfGroups())  # type: ignore
 
         if verbose:
             print(r)
@@ -51,8 +51,8 @@ def smp_svr_stats(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
-        r = await smp_request(smpclient, options, GroupData(name="smp_svr_stats"))
+        await connect_with_spinner(smpclient)
+        r = await smp_request(smpclient, GroupData(name="smp_svr_stats"))
         print(r)
 
     asyncio.run(f())
@@ -68,8 +68,8 @@ def get_group(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
-        r = await smp_request(smpclient, options, GroupData(name=group_id))
+        await connect_with_spinner(smpclient)
+        r = await smp_request(smpclient, GroupData(name=group_id))
         print(r)
 
     asyncio.run(f())
@@ -86,9 +86,9 @@ def fetch_all_groups(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
-        list_response = await smp_request(smpclient, options, ListOfGroups())  # type: ignore
+        list_response = await smp_request(smpclient, ListOfGroups())  # type: ignore
 
         if not hasattr(list_response, 'stat_list') or not list_response.stat_list:
             print("No statistics groups available")
@@ -97,7 +97,7 @@ def fetch_all_groups(
         groups_data = []
 
         for group_name in list_response.stat_list:
-            group_data = await smp_request(smpclient, options, GroupData(name=group_name))
+            group_data = await smp_request(smpclient, GroupData(name=group_name))
             groups_data.append({'name': group_name, 'data': group_data})
 
         if verbose:

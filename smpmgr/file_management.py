@@ -41,9 +41,9 @@ def get_supported_hash_types(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
-        r = await smp_request(smpclient, options, SupportedFileHashChecksumTypes(), "Waiting for supported hash types...")  # type: ignore # noqa
+        r = await smp_request(smpclient, SupportedFileHashChecksumTypes(), "Waiting for supported hash types...")  # type: ignore # noqa
 
         if error(r):
             print(r)
@@ -65,9 +65,9 @@ def get_hash(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
-        r = await smp_request(smpclient, options, FileHashChecksum(name=file), "Waiting for hash...")  # type: ignore # noqa
+        r = await smp_request(smpclient, FileHashChecksum(name=file), "Waiting for hash...")  # type: ignore # noqa
 
         if error(r) or success(r):
             print(r)
@@ -87,9 +87,9 @@ def read_size(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
-        r = await smp_request(smpclient, options, FileStatus(name=file), "Waiting for file size...")  # type: ignore # noqa
+        r = await smp_request(smpclient, FileStatus(name=file), "Waiting for file size...")  # type: ignore # noqa
 
         if error(r):
             print(r)
@@ -146,7 +146,7 @@ def upload(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
         with open(file, "rb") as f:
             await upload_with_progress_bar(smpclient, f, destination)
 
@@ -173,7 +173,7 @@ def download(
     destination = Path(Path(file).name) if destination is None else destination
 
     async def f() -> None:
-        await connect_with_spinner(smpclient, options.timeout)
+        await connect_with_spinner(smpclient)
 
         with Progress(
             SpinnerColumn(), TextColumn("[progress.description]{task.description}")
