@@ -236,24 +236,29 @@ def _firmware_modules() -> tuple[tuple[str, object], ...]:
 
 
 @firmware_app.command(name="paths")
-def firmware_paths() -> None:
-    """List bundled HCI controller firmware images and their paths."""
+def firmware_paths(
+    verbose: Annotated[
+        bool,
+        typer.Option("--verbose", "-v", help="Also print board and full SHA256 per entry."),
+    ] = False,
+) -> None:
+    """List bundled HCI controller firmware images, one path per line.
 
-    table = Table(title="Bundled Zephyr HCI firmware")
-    table.add_column("Name")
-    table.add_column("Board")
-    table.add_column("Variant")
-    table.add_column("HEX path")
-    table.add_column("SHA256 (short)")
-    for name, mod in _firmware_modules():
-        table.add_row(
-            name,
-            getattr(mod, "BOARD", "?"),
-            getattr(mod, "OPTIONS", "?"),
-            str(getattr(mod, "HEX_PATH", "?")),
-            getattr(mod, "HEX_SHA256", "")[:12],
-        )
-    print(table)
+    Default output is `<name>  <absolute hex path>`, sized for piping into
+    `cut`, `awk`, or `west flash --hex-file=$(... | grep nrf52840dk_default | awk '{print $2}')`.
+    """
+    modules: Final = _firmware_modules()
+    name_width: Final = max(len(name) for name, _ in modules)
+    for name, mod in modules:
+        hex_path = getattr(mod, "HEX_PATH")
+        if verbose:
+            typer.echo(name)
+            typer.echo(f"  path:   {hex_path}")
+            typer.echo(f"  board:  {getattr(mod, 'BOARD', '?')}")
+            typer.echo(f"  sha256: {getattr(mod, 'HEX_SHA256', '')}")
+            typer.echo("")
+        else:
+            typer.echo(f"{name:<{name_width}}  {hex_path}")
 
 
 @firmware_app.command(name="extract")
