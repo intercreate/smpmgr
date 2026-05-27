@@ -2520,7 +2520,7 @@ pydantic = ">=2.6,<3.0"
 
 [[package]]
 name = "smpclient"
-version = "7.0.2.dev10+g750622401"
+version = "7.0.2.dev11+g2fe70807a"
 description = "Simple Management Protocol (SMP) Client for remotely managing MCU firmware"
 optional = false
 python-versions = "<4,>=3.10"
@@ -2549,7 +2549,7 @@ serial = ["pyserial (>=3.5)"]
 type = "git"
 url = "https://github.com/intercreate/smpclient.git"
 reference = "feature/bumble-transport"
-resolved_reference = "750622401ae3503b22a679d2e3b560212f017042"
+resolved_reference = "2fe70807a308fa5de2ba2ab0f9231a023c86e913"
 
 [[package]]
 name = "tomlkit"
