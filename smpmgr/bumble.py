@@ -223,67 +223,52 @@ def bonds_clear_all(
     asyncio.run(f())
 
 
-def _firmware_modules() -> tuple[tuple[str, object], ...]:
-    try:
-        from zephyr_4_4_0_hci import firmware
-    except ModuleNotFoundError as e:
+def _register_firmware_extract(
+    parent: typer.Typer, name: str, mod: 'FirmwareModule'
+) -> None:
+    """Register one subcommand per typed firmware variant on `parent`."""
+    short_help: Final = (
+        f"Board {mod.BOARD}, build {mod.OPTIONS}, sha256={mod.HEX_SHA256[:8]}…"
+    )
+
+    @parent.command(name=name, help=short_help)
+    def _extract(
+        dest: Annotated[
+            Path, typer.Argument(help="Destination .hex path (parent dir is auto-created).")
+        ],
+        verify: Annotated[
+            bool,
+            typer.Option(
+                "--verify/--no-verify",
+                help="Verify the embedded SHA-256 before writing.",
+            ),
+        ] = True,
+    ) -> None:
+        if verify:
+            try:
+                mod.read_firmware_bytes()
+            except ValueError as e:
+                print(f"[red]SHA-256 verification failed:[/red] {e}")
+                raise typer.Exit(code=1) from e
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(mod.HEX_PATH, dest)
+        print(f"[green]Wrote[/green] {dest} ({mod.HEX_PATH.stat().st_size} bytes).")
+
+
+try:
+    from smpclient.transport.firmware.hci import Firmware, firmware
+    from zephyr_4_4_0_hci import FirmwareModule
+
+    for _name in Firmware._fields:
+        _register_firmware_extract(firmware_app, _name, getattr(firmware, _name))
+except ImportError:
+
+    @firmware_app.callback(invoke_without_command=True)
+    def _firmware_unavailable(ctx: typer.Context) -> None:
+        if ctx.invoked_subcommand is not None:
+            return
         print(
             "[red]Bundled HCI firmware is not installed.[/red]"
             " Reinstall smpclient with the [bold]hci_firmware[/bold] extra."
         )
-        raise typer.Exit(code=1) from e
-    return tuple((name, getattr(firmware, name)) for name in firmware._fields)
-
-
-@firmware_app.command(name="paths")
-def firmware_paths(
-    verbose: Annotated[
-        bool,
-        typer.Option("--verbose", "-v", help="Also print board and full SHA256 per entry."),
-    ] = False,
-) -> None:
-    """List bundled HCI controller firmware images, one path per line.
-
-    Default output is `<name>  <absolute hex path>`, sized for piping into
-    `cut`, `awk`, or `west flash --hex-file=$(... | grep nrf52840dk_default | awk '{print $2}')`.
-    """
-    modules: Final = _firmware_modules()
-    name_width: Final = max(len(name) for name, _ in modules)
-    for name, mod in modules:
-        hex_path = getattr(mod, "HEX_PATH")
-        if verbose:
-            typer.echo(name)
-            typer.echo(f"  path:   {hex_path}")
-            typer.echo(f"  board:  {getattr(mod, 'BOARD', '?')}")
-            typer.echo(f"  sha256: {getattr(mod, 'HEX_SHA256', '')}")
-            typer.echo("")
-        else:
-            typer.echo(f"{name:<{name_width}}  {hex_path}")
-
-
-@firmware_app.command(name="extract")
-def firmware_extract(
-    name: Annotated[
-        str,
-        typer.Argument(
-            help="Firmware name as shown by 'bumble firmware paths' (e.g. nrf52840dk_default).",
-        ),
-    ],
-    dest: Annotated[
-        Path,
-        typer.Argument(help="Destination .hex path (parent directory is created if missing)."),
-    ],
-) -> None:
-    """Copy a bundled HCI firmware .hex out to an arbitrary path."""
-
-    mods = dict(_firmware_modules())
-    if name not in mods:
-        print(
-            f"[red]Unknown firmware {name!r}.[/red]"
-            f" Known: {', '.join(mods.keys()) or '<none>'}."
-        )
         raise typer.Exit(code=1)
-    src: Final = Path(getattr(mods[name], "HEX_PATH"))
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(src, dest)
-    print(f"[green]Wrote[/green] {dest} ({src.stat().st_size} bytes).")
