@@ -63,21 +63,20 @@ def state_read(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        async with connect_with_spinner(smpclient):
+            r = await smp_request(smpclient, ImageStatesRead(), "Waiting for image states...")
 
-        r = await smp_request(smpclient, ImageStatesRead(), "Waiting for image states...")
-
-        if error(r):
-            print(r)
-        elif success(r):
-            if len(r.images) == 0:
-                print("No images on device!")
-            for image in r.images:
-                print(image)
-            if r.splitStatus is not None:
-                print(f"splitStatus: {r.splitStatus}")
-        else:
-            raise Exception("Unreachable")
+            if error(r):
+                print(r)
+            elif success(r):
+                if len(r.images) == 0:
+                    print("No images on device!")
+                for image in r.images:
+                    print(image)
+                if r.splitStatus is not None:
+                    print(f"splitStatus: {r.splitStatus}")
+            else:
+                raise Exception("Unreachable")
 
     asyncio.run(f())
 
@@ -117,20 +116,19 @@ def state_write(
     hash_bytes = bytes.fromhex(hash) if hash is not None else None
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        async with connect_with_spinner(smpclient):
+            r = await smp_request(
+                smpclient,
+                ImageStatesWrite(hash=hash_bytes, confirm=confirm),
+                "Waiting for image state write...",
+            )
 
-        r = await smp_request(
-            smpclient,
-            ImageStatesWrite(hash=hash_bytes, confirm=confirm),
-            "Waiting for image state write...",
-        )
-
-        if error(r):
-            print(r)
-        elif success(r):
-            pass
-        else:
-            raise Exception("Unreachable")
+            if error(r):
+                print(r)
+            elif success(r):
+                pass
+            else:
+                raise Exception("Unreachable")
 
     asyncio.run(f())
 
@@ -149,16 +147,15 @@ def erase(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        async with connect_with_spinner(smpclient):
+            r = await smp_request(smpclient, ImageErase(slot=slot), "Waiting for image erase...")
 
-        r = await smp_request(smpclient, ImageErase(slot=slot), "Waiting for image erase...")
-
-        if error(r):
-            print(r)
-        elif success(r):
-            pass
-        else:
-            raise Exception("Unreachable")
+            if error(r):
+                print(r)
+            elif success(r):
+                pass
+            else:
+                raise Exception("Unreachable")
 
     asyncio.run(f())
 
@@ -225,8 +222,8 @@ def upload(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
-        with open(file, "rb") as f:
-            await upload_with_progress_bar(smpclient, f, slot)
+        async with connect_with_spinner(smpclient):
+            with open(file, "rb") as f:
+                await upload_with_progress_bar(smpclient, f, slot)
 
     asyncio.run(f())

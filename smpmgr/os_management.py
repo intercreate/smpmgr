@@ -18,9 +18,9 @@ def echo(ctx: typer.Context, message: str) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
-        r = await smp_request(smpclient, EchoWrite(d=message))  # type: ignore
-        print(r)
+        async with connect_with_spinner(smpclient):
+            r = await smp_request(smpclient, EchoWrite(d=message))  # type: ignore
+            print(r)
 
     asyncio.run(f())
 
@@ -33,8 +33,8 @@ def reset(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
-        r = await smp_request(smpclient, ResetWrite())  # type: ignore
-        print(r)
+        async with connect_with_spinner(smpclient):
+            r = await smp_request(smpclient, ResetWrite())  # type: ignore
+            print(r)
 
     asyncio.run(f())

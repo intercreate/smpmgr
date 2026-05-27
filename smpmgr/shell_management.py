@@ -29,27 +29,26 @@ def shell(
     smpclient: Final = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
-
-        response: Final = await smp_request(
-            smpclient,
-            Execute(argv=shlex.split(command)),
-            f"Waiting response to {command}...",
-            timeout_s=timeout,
-        )
-        if success(response):
-            if response.ret == 0:  # success, regular text color
-                print(response.o)
-            elif response.ret > 0:
-                rich_print(f"[yellow]Return code: {response.ret}[/yellow]")
-                print(response.o)
-            else:  # non-zero return code, error color
-                rich_print(f"[red]{response.o}[/red]")
-            if verbose:
+        async with connect_with_spinner(smpclient):
+            response: Final = await smp_request(
+                smpclient,
+                Execute(argv=shlex.split(command)),
+                f"Waiting response to {command}...",
+                timeout_s=timeout,
+            )
+            if success(response):
+                if response.ret == 0:  # success, regular text color
+                    print(response.o)
+                elif response.ret > 0:
+                    rich_print(f"[yellow]Return code: {response.ret}[/yellow]")
+                    print(response.o)
+                else:  # non-zero return code, error color
+                    rich_print(f"[red]{response.o}[/red]")
+                if verbose:
+                    rich_print(response)
+            elif error(response):
                 rich_print(response)
-        elif error(response):
-            rich_print(response)
-        else:
-            assert_never(response)
+            else:
+                assert_never(response)
 
     asyncio.run(f())
