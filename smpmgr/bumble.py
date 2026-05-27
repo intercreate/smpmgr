@@ -223,36 +223,54 @@ def bonds_clear_all(
     asyncio.run(f())
 
 
-def _register_firmware_extract(
+def _register_firmware_command(
     parent: typer.Typer, name: str, mod: 'FirmwareModule'
 ) -> None:
-    """Register one subcommand per typed firmware variant on `parent`."""
+    """Register one subcommand per typed firmware variant on `parent`.
+
+    Default action with no flags: print the absolute .hex path to stdout —
+    designed for shell composition, e.g.
+    `west flash --hex-file=$(smpmgr bumble firmware nrf52840dk_default)`.
+
+    Pass `--extract <PATH>` to copy the bundled .hex out to a destination
+    (useful when running from the portable binary where the bundle is opaque).
+    """
     short_help: Final = (
         f"Board {mod.BOARD}, build {mod.OPTIONS}, sha256={mod.HEX_SHA256[:8]}…"
     )
 
     @parent.command(name=name, help=short_help)
-    def _extract(
-        dest: Annotated[
-            Path, typer.Argument(help="Destination .hex path (parent dir is auto-created).")
-        ],
+    def _fw(
+        extract: Annotated[
+            Path | None,
+            typer.Option(
+                "--extract",
+                help="Copy the .hex out to this path (parent dir auto-created).",
+            ),
+        ] = None,
         verify: Annotated[
             bool,
             typer.Option(
                 "--verify/--no-verify",
-                help="Verify the embedded SHA-256 before writing.",
+                help="Verify the embedded SHA-256 before copying"
+                " (only meaningful with --extract).",
             ),
         ] = True,
     ) -> None:
+        if extract is None:
+            typer.echo(str(mod.HEX_PATH))
+            return
         if verify:
             try:
                 mod.read_firmware_bytes()
             except ValueError as e:
-                print(f"[red]SHA-256 verification failed:[/red] {e}")
+                typer.echo(f"SHA-256 verification failed: {e}", err=True)
                 raise typer.Exit(code=1) from e
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(mod.HEX_PATH, dest)
-        print(f"[green]Wrote[/green] {dest} ({mod.HEX_PATH.stat().st_size} bytes).")
+        extract.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(mod.HEX_PATH, extract)
+        typer.echo(
+            f"Wrote {extract} ({mod.HEX_PATH.stat().st_size} bytes)", err=True
+        )
 
 
 try:
@@ -260,7 +278,7 @@ try:
     from zephyr_4_4_0_hci import FirmwareModule
 
     for _name in Firmware._fields:
-        _register_firmware_extract(firmware_app, _name, getattr(firmware, _name))
+        _register_firmware_command(firmware_app, _name, getattr(firmware, _name))
 except ImportError:
 
     @firmware_app.callback(invoke_without_command=True)
