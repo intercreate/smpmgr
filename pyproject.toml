@@ -30,7 +30,8 @@ format-jinja = "{% if distance == 0 %}{{ base }}{% if dirty %}+dirty{% endif %}{
 
 [tool.poetry.dependencies]
 python = ">=3.11, <4"
-smpclient = { extras = ["all"], version = "==7.0.1" }
+# TODO(bumble): revert to a tagged PyPI release once intercreate/smpclient#107 lands.
+smpclient = { git = "https://github.com/intercreate/smpclient.git", branch = "feature/bumble-transport", extras = ["all"] }
 typer = { extras = ["all"], version = "==0.24.1" }
 readchar = "==4.2.1"
 
