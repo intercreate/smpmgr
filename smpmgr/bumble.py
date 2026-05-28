@@ -21,11 +21,7 @@ from smpclient.transport.bumble.pairing import (
 from smpclient.transport.bumble.scan import ScanAll, ScanForName, ScanMode
 from typing_extensions import Annotated, assert_never
 
-from smpmgr.common import (
-    Options,
-    build_pair_delegate,
-    resolve_keystore_strategy,
-)
+from smpmgr.common import Options, build_pair_delegate, resolve_keystore_strategy
 
 logger = logging.getLogger(__name__)
 
@@ -223,9 +219,7 @@ def bonds_clear_all(
     asyncio.run(f())
 
 
-def _register_firmware_command(
-    parent: typer.Typer, name: str, mod: 'FirmwareModule'
-) -> None:
+def _register_firmware_command(parent: typer.Typer, name: str, mod: 'FirmwareModule') -> None:
     """Register one subcommand per typed firmware variant on `parent`.
 
     Default action with no flags: print the absolute .hex path to stdout —
@@ -235,9 +229,7 @@ def _register_firmware_command(
     Pass `--extract <PATH>` to copy the bundled .hex out to a destination
     (useful when running from the portable binary where the bundle is opaque).
     """
-    short_help: Final = (
-        f"Board {mod.BOARD}, build {mod.OPTIONS}, sha256={mod.HEX_SHA256[:8]}…"
-    )
+    short_help: Final = f"Board {mod.BOARD}, build {mod.OPTIONS}, sha256={mod.HEX_SHA256[:8]}…"
 
     @parent.command(name=name, help=short_help)
     def _fw(
@@ -268,9 +260,7 @@ def _register_firmware_command(
                 raise typer.Exit(code=1) from e
         extract.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy(mod.HEX_PATH, extract)
-        typer.echo(
-            f"Wrote {extract} ({mod.HEX_PATH.stat().st_size} bytes)", err=True
-        )
+        typer.echo(f"Wrote {extract} ({mod.HEX_PATH.stat().st_size} bytes)", err=True)
 
 
 try:

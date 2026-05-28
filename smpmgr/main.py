@@ -19,8 +19,8 @@ from smpclient.requests.os_management import ResetWrite
 from smpclient.transport.bumble.pairing import DEFAULT_PAIR_TIMEOUT_S
 from typing_extensions import Annotated, assert_never
 
+from smpmgr import bumble as bumble_cli
 from smpmgr import (
-    bumble as bumble_cli,
     enumeration_management,
     file_management,
     image_management,
@@ -42,11 +42,7 @@ from smpmgr.common import (
     get_smpclient,
     smp_request,
 )
-from smpmgr.image_management import (
-    ImageFormat,
-    ImageFormatOption,
-    upload_with_progress_bar,
-)
+from smpmgr.image_management import ImageFormat, ImageFormatOption, upload_with_progress_bar
 from smpmgr.logging import LogLevel, setup_logging
 from smpmgr.plugins import get_plugins
 from smpmgr.user import intercreate

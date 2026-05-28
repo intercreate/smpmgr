@@ -33,18 +33,8 @@ from smpclient.transport.bumble import (
     SMPBumbleTransportException,
     SMPBumbleTransportNotSMPServer,
 )
-from smpclient.transport.bumble.keystore import (
-    Custom,
-    InMemory,
-    KeystoreStrategy,
-    Local,
-    Tempfile,
-)
-from smpclient.transport.bumble.pairing import (
-    DisplayOnly,
-    KeyboardOnly,
-    NoInputNoOutput,
-)
+from smpclient.transport.bumble.keystore import Custom, InMemory, KeystoreStrategy, Local, Tempfile
+from smpclient.transport.bumble.pairing import DisplayOnly, KeyboardOnly, NoInputNoOutput
 from smpclient.transport.serial import SMPSerialTransport
 from smpclient.transport.udp import SMPUDPTransport
 
