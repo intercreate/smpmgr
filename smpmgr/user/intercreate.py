@@ -73,8 +73,8 @@ def upload(
     smpclient = get_custom_smpclient(options, ic.ICUploadClient)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
-        with open(file, "rb") as f:
-            await upload_with_progress_bar(smpclient, f, image)
+        async with connect_with_spinner(smpclient):
+            with open(file, "rb") as f:
+                await upload_with_progress_bar(smpclient, f, image)
 
     asyncio.run(f())

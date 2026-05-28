@@ -41,16 +41,15 @@ def get_supported_hash_types(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        async with connect_with_spinner(smpclient):
+            r = await smp_request(smpclient, SupportedFileHashChecksumTypes(), "Waiting for supported hash types...")  # type: ignore # noqa
 
-        r = await smp_request(smpclient, SupportedFileHashChecksumTypes(), "Waiting for supported hash types...")  # type: ignore # noqa
-
-        if error(r):
-            print(r)
-        elif success(r):
-            print(r.types)
-        else:
-            raise Exception("Unreachable")
+            if error(r):
+                print(r)
+            elif success(r):
+                print(r.types)
+            else:
+                raise Exception("Unreachable")
 
     asyncio.run(f())
 
@@ -65,14 +64,13 @@ def get_hash(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        async with connect_with_spinner(smpclient):
+            r = await smp_request(smpclient, FileHashChecksum(name=file), "Waiting for hash...")  # type: ignore # noqa
 
-        r = await smp_request(smpclient, FileHashChecksum(name=file), "Waiting for hash...")  # type: ignore # noqa
-
-        if error(r) or success(r):
-            print(r)
-        else:
-            raise Exception("Unreachable")
+            if error(r) or success(r):
+                print(r)
+            else:
+                raise Exception("Unreachable")
 
     asyncio.run(f())
 
@@ -87,16 +85,15 @@ def read_size(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        async with connect_with_spinner(smpclient):
+            r = await smp_request(smpclient, FileStatus(name=file), "Waiting for file size...")  # type: ignore # noqa
 
-        r = await smp_request(smpclient, FileStatus(name=file), "Waiting for file size...")  # type: ignore # noqa
-
-        if error(r):
-            print(r)
-        elif success(r):
-            print(r.len)
-        else:
-            raise Exception("Unreachable")
+            if error(r):
+                print(r)
+            elif success(r):
+                print(r.len)
+            else:
+                raise Exception("Unreachable")
 
     asyncio.run(f())
 
@@ -146,9 +143,9 @@ def upload(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
-        with open(file, "rb") as f:
-            await upload_with_progress_bar(smpclient, f, destination)
+        async with connect_with_spinner(smpclient):
+            with open(file, "rb") as f:
+                await upload_with_progress_bar(smpclient, f, destination)
 
     asyncio.run(f())
 
@@ -173,18 +170,19 @@ def download(
     destination = Path(Path(file).name) if destination is None else destination
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        async with connect_with_spinner(smpclient):
+            with Progress(
+                SpinnerColumn(), TextColumn("[progress.description]{task.description}")
+            ) as progress:
+                download_task = progress.add_task(description=f"Downloading {file}", total=None)
+                file_data = await smpclient.download_file(file)
+                progress.update(download_task, description=f"Downloaded {file}", completed=True)
 
-        with Progress(
-            SpinnerColumn(), TextColumn("[progress.description]{task.description}")
-        ) as progress:
-            download_task = progress.add_task(description=f"Downloading {file}", total=None)
-            file_data = await smpclient.download_file(file)
-            progress.update(download_task, description=f"Downloaded {file}", completed=True)
-
-            save_task = progress.add_task(description=f"Saving {destination}", total=len(file_data))
-            with destination.open("wb") as dest_f:
-                dest_f.write(file_data)
-            progress.update(save_task, description=f"Saved {destination}", completed=True)
+                save_task = progress.add_task(
+                    description=f"Saving {destination}", total=len(file_data)
+                )
+                with destination.open("wb") as dest_f:
+                    dest_f.write(file_data)
+                progress.update(save_task, description=f"Saved {destination}", completed=True)
 
     asyncio.run(f())

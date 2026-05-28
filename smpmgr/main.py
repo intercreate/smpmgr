@@ -16,8 +16,10 @@ from smpclient.generics import error, error_v1, error_v2, success
 from smpclient.mcuboot import IMAGE_TLV, ImageInfo, ImageTLVValue, TLVNotFound
 from smpclient.requests.image_management import ImageStatesRead, ImageStatesWrite
 from smpclient.requests.os_management import ResetWrite
+from smpclient.transport.bumble.pairing import DEFAULT_PAIR_TIMEOUT_S
 from typing_extensions import Annotated, assert_never
 
+from smpmgr import bumble as bumble_cli
 from smpmgr import (
     enumeration_management,
     file_management,
@@ -28,9 +30,13 @@ from smpmgr import (
     terminal,
 )
 from smpmgr.common import (
+    DEFAULT_HCI,
+    DEFAULT_KEYSTORE,
     DEFAULT_LINE_BUFFERS,
     DEFAULT_LINE_LENGTH,
+    DEFAULT_PAIR_ON_CONNECT,
     Options,
+    PairOnConnectMode,
     TransportDefinition,
     connect_with_spinner,
     get_smpclient,
@@ -72,6 +78,7 @@ app.add_typer(stat_management.app)
 app.add_typer(image_management.app)
 app.add_typer(file_management.app)
 app.add_typer(enumeration_management.app)
+app.add_typer(bumble_cli.app)
 app.add_typer(intercreate.app)
 app.command()(shell_management.shell)
 app.command()(terminal.terminal)
@@ -88,6 +95,43 @@ def options(
         None, help="The serial port to connect to, e.g. COM1, /dev/ttyACM0, etc."
     ),
     ble: str = typer.Option(None, help="The Bluetooth address to connect to"),
+    bumble: str = typer.Option(
+        None,
+        help=(
+            "BD_ADDR or advertised local name to connect to via the bumble BLE"
+            " transport (uses an external HCI controller, e.g. nRF52840 dongle)."
+        ),
+    ),
+    hci: str = typer.Option(
+        DEFAULT_HCI,
+        envvar="SMPMGR_BUMBLE_HCI",
+        help=(
+            "bumble HCI transport spec, e.g. 'usb:0' or 'tcp-client:host:port'."
+            " Only used when --bumble is set."
+        ),
+    ),
+    keystore: str = typer.Option(
+        DEFAULT_KEYSTORE,
+        help=(
+            "Bond keystore: 'local' (persistent user data dir), 'tempfile' (system"
+            " temp dir; may be wiped on reboot), 'memory' (lost on exit), or a"
+            " filesystem path. Only used when --bumble is set."
+        ),
+    ),
+    pair_on_connect: PairOnConnectMode = typer.Option(
+        DEFAULT_PAIR_ON_CONNECT.value,
+        help=(
+            "Pairing delegate used on first connect when no bond exists."
+            " 'keyboard' prompts for a peer-displayed PIN; 'display' shows a"
+            " PIN to enter on the peer; 'nio' (no-input-no-output) is JustWorks;"
+            " 'none' disables pair-on-connect (pre-bond with 'smpmgr bumble pair')."
+            " Only used when --bumble is set."
+        ),
+    ),
+    pair_timeout_s: float = typer.Option(
+        DEFAULT_PAIR_TIMEOUT_S,
+        help="Upper bound on the pairing exchange in seconds. Only used when --bumble is set.",
+    ),
     timeout: float = typer.Option(
         2.0, help="Transport timeout in seconds; how long to wait for requests"
     ),
@@ -146,11 +190,15 @@ def options(
 
     ctx.obj = Options(
         timeout=timeout,
-        transport=TransportDefinition(port=port, ble=ble, ip=ip),
+        transport=TransportDefinition(port=port, ble=ble, ip=ip, bumble=bumble),
         mtu=mtu,
         baudrate=baudrate,
         line_length=line_length,
         line_buffers=line_buffers,
+        hci=hci,
+        keystore=keystore,
+        pair_on_connect=pair_on_connect,
+        pair_timeout_s=pair_timeout_s,
     )
     logger.info(ctx.obj)
 
@@ -228,73 +276,72 @@ def upgrade(
 
     async def f() -> None:
         image_hash: bytes | None = None
-        await connect_with_spinner(smpclient)
+        async with connect_with_spinner(smpclient):
+            with open(file, "rb") as f:
+                await upload_with_progress_bar(smpclient, f, slot)
 
-        with open(file, "rb") as f:
-            await upload_with_progress_bar(smpclient, f, slot)
+            if slot != 0 or confirm:
+                match format:
+                    case ImageFormat.MCUBOOT:
+                        assert image_tlv_sha256 is not None
+                        image_hash = image_tlv_sha256.value
+                    case ImageFormat.ANY:
+                        r = await smp_request(
+                            smpclient, ImageStatesRead(), "Waiting for image states..."
+                        )
 
-        if slot != 0 or confirm:
-            match format:
-                case ImageFormat.MCUBOOT:
-                    assert image_tlv_sha256 is not None
-                    image_hash = image_tlv_sha256.value
-                case ImageFormat.ANY:
-                    r = await smp_request(
-                        smpclient, ImageStatesRead(), "Waiting for image states..."
-                    )
-
-                    if error(r):
-                        print(r)
-                        raise typer.Exit(code=1)
-                    elif success(r):
-                        if len(r.images) == 0:
-                            print("No images on device!")
+                        if error(r):
+                            print(r)
                             raise typer.Exit(code=1)
-                        for image in r.images:
-                            if image.slot == slot:
-                                image_hash = image.hash
-                                break
-                        if image_hash is None:
-                            print(f"Image with slot {slot} not found!")
-                            raise typer.Exit(code=1)
-                    else:
-                        assert_never(r)
-                case _ as unreachable:
-                    assert_never(unreachable)
+                        elif success(r):
+                            if len(r.images) == 0:
+                                print("No images on device!")
+                                raise typer.Exit(code=1)
+                            for image in r.images:
+                                if image.slot == slot:
+                                    image_hash = image.hash
+                                    break
+                            if image_hash is None:
+                                print(f"Image with slot {slot} not found!")
+                                raise typer.Exit(code=1)
+                        else:
+                            assert_never(r)
+                    case _ as unreachable:
+                        assert_never(unreachable)
 
-            image_states_response = await smp_request(
-                smpclient,
-                ImageStatesWrite(hash=image_hash, confirm=confirm),
-                "Marking uploaded image for permanent upgrade..."
-                if confirm
-                else "Marking uploaded image for test upgrade...",
-            )
-            if success(image_states_response):
+                image_states_response = await smp_request(
+                    smpclient,
+                    ImageStatesWrite(hash=image_hash, confirm=confirm),
+                    "Marking uploaded image for permanent upgrade..."
+                    if confirm
+                    else "Marking uploaded image for test upgrade...",
+                )
+                if success(image_states_response):
+                    pass
+                elif error(image_states_response):
+                    print(image_states_response)
+                    raise typer.Exit(code=1)
+                else:
+                    assert_never(image_states_response)
+
+            reset_response = await smp_request(smpclient, ResetWrite())
+            if success(reset_response):
                 pass
-            elif error(image_states_response):
-                print(image_states_response)
-                raise typer.Exit(code=1)
-            else:
-                assert_never(image_states_response)
-
-        reset_response = await smp_request(smpclient, ResetWrite())
-        if success(reset_response):
-            pass
-        elif error(reset_response):
-            if error_v1(reset_response):
-                if reset_response.rc != smperr.MGMT_ERR.EOK:
-                    print(reset_response)
-                    raise typer.Exit(code=1)
-            elif error_v2(reset_response):
-                if reset_response.err.rc != OS_MGMT_RET_RC.OK:
-                    print(reset_response)
-                    raise typer.Exit(code=1)
+            elif error(reset_response):
+                if error_v1(reset_response):
+                    if reset_response.rc != smperr.MGMT_ERR.EOK:
+                        print(reset_response)
+                        raise typer.Exit(code=1)
+                elif error_v2(reset_response):
+                    if reset_response.err.rc != OS_MGMT_RET_RC.OK:
+                        print(reset_response)
+                        raise typer.Exit(code=1)
+                else:
+                    assert_never(reset_response)
             else:
                 assert_never(reset_response)
-        else:
-            assert_never(reset_response)
 
-        print("Upgrade complete.")
+            print("Upgrade complete.")
 
         if slot != 0:
             print("The device may take a few minutes to complete FW swap.")

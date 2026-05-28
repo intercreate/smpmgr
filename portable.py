@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Final
 
 from rich import print
+from zephyr_4_4_0_hci import Firmware, firmware
 
 exe_name: Final = "smpmgr.exe" if platform.system() == "Windows" else "smpmgr"
 
@@ -35,6 +36,12 @@ try:
     unpacked_folder = "dist" / Path(archives[0].name.replace(".tar.gz", ""))
     version = unpacked_folder.name.split("-")[1]
 
+    hci_firmware_data: Final = tuple(
+        f"--collect-data={pkg}"
+        for pkg in ("zephyr_4_4_0_hci",)
+        + tuple(getattr(firmware, name).__name__ for name in Firmware._fields)
+    )
+
     # build the portable
     assert (
         subprocess.run(
@@ -48,8 +55,8 @@ try:
                 "--collect-submodules=shellingham",
                 "--collect-submodules=readchar",
                 "--hidden-import=readchar",
-                "smpmgr/__main__.py",
             )
+            + hci_firmware_data
             + (
                 (
                     "--hidden-import=winrt.windows.foundation.collections",  # https://github.com/intercreate/smpmgr/issues/34 # noqa: E501
@@ -57,6 +64,7 @@ try:
                 if sys.platform == "win32"
                 else ()
             )
+            + ("smpmgr/__main__.py",)
         ).returncode
         == 0
     )

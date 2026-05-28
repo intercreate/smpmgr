@@ -74,10 +74,9 @@ def write(ctx: typer.Context, message: str) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
-
-        r = await smpclient.request(ExampleWrite(d=message))
-        print(r)
+        async with connect_with_spinner(smpclient):
+            r = await smpclient.request(ExampleWrite(d=message))
+            print(r)
 
     asyncio.run(f())
 
@@ -90,9 +89,8 @@ def read(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
-
-        r = await smpclient.request(ExampleRead())
-        print(r)
+        async with connect_with_spinner(smpclient):
+            r = await smpclient.request(ExampleRead())
+            print(r)
 
     asyncio.run(f())

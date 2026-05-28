@@ -22,23 +22,23 @@ def list_stats(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
-        r = await smp_request(smpclient, ListOfGroups())  # type: ignore
+        async with connect_with_spinner(smpclient):
+            r = await smp_request(smpclient, ListOfGroups())  # type: ignore
 
-        if verbose:
-            print(r)
-        else:
-            if hasattr(r, 'stat_list') and r.stat_list:
-                table = Table(title="Statistics Groups")
-                table.add_column("Group Name", style="cyan")
-                table.add_column("Number of Groups", style="green")
-
-                for group_name in r.stat_list:
-                    table.add_row(group_name, str(len(r.stat_list)))
-
-                print(table)
+            if verbose:
+                print(r)
             else:
-                print("No statistics groups available")
+                if hasattr(r, 'stat_list') and r.stat_list:
+                    table = Table(title="Statistics Groups")
+                    table.add_column("Group Name", style="cyan")
+                    table.add_column("Number of Groups", style="green")
+
+                    for group_name in r.stat_list:
+                        table.add_row(group_name, str(len(r.stat_list)))
+
+                    print(table)
+                else:
+                    print("No statistics groups available")
 
     asyncio.run(f())
 
@@ -51,9 +51,9 @@ def smp_svr_stats(ctx: typer.Context) -> None:
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
-        r = await smp_request(smpclient, GroupData(name="smp_svr_stats"))
-        print(r)
+        async with connect_with_spinner(smpclient):
+            r = await smp_request(smpclient, GroupData(name="smp_svr_stats"))
+            print(r)
 
     asyncio.run(f())
 
@@ -68,9 +68,9 @@ def get_group(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
-        r = await smp_request(smpclient, GroupData(name=group_id))
-        print(r)
+        async with connect_with_spinner(smpclient):
+            r = await smp_request(smpclient, GroupData(name=group_id))
+            print(r)
 
     asyncio.run(f())
 
@@ -86,41 +86,40 @@ def fetch_all_groups(
     smpclient = get_smpclient(options)
 
     async def f() -> None:
-        await connect_with_spinner(smpclient)
+        async with connect_with_spinner(smpclient):
+            list_response = await smp_request(smpclient, ListOfGroups())  # type: ignore
 
-        list_response = await smp_request(smpclient, ListOfGroups())  # type: ignore
+            if not hasattr(list_response, 'stat_list') or not list_response.stat_list:
+                print("No statistics groups available")
+                return
 
-        if not hasattr(list_response, 'stat_list') or not list_response.stat_list:
-            print("No statistics groups available")
-            return
+            groups_data = []
 
-        groups_data = []
+            for group_name in list_response.stat_list:
+                group_data = await smp_request(smpclient, GroupData(name=group_name))
+                groups_data.append({'name': group_name, 'data': group_data})
 
-        for group_name in list_response.stat_list:
-            group_data = await smp_request(smpclient, GroupData(name=group_name))
-            groups_data.append({'name': group_name, 'data': group_data})
+            if verbose:
+                for group_info in groups_data:
+                    print(f"\n=== Group: {group_info['name']} ===")
+                    print("Data:")
+                    print(group_info['data'])
+            else:
+                table = Table(title="All Statistics Groups Data")
+                table.add_column("Group Name", style="cyan")
+                table.add_column("Data Available", style="yellow")
 
-        if verbose:
-            for group_info in groups_data:
-                print(f"\n=== Group: {group_info['name']} ===")
-                print("Data:")
-                print(group_info['data'])
-        else:
-            table = Table(title="All Statistics Groups Data")
-            table.add_column("Group Name", style="cyan")
-            table.add_column("Data Available", style="yellow")
+                for group_info in groups_data:
+                    group_name = str(group_info['name'])
+                    data_available = "Yes" if group_info['data'] else "No"
+                    table.add_row(group_name, data_available)
 
-            for group_info in groups_data:
-                group_name = str(group_info['name'])
-                data_available = "Yes" if group_info['data'] else "No"
-                table.add_row(group_name, data_available)
+                print(table)
 
-            print(table)
-
-            print("\n=== Detailed Group Data ===")
-            for group_info in groups_data:
-                print(f"\n[bold cyan]Group: {group_info['name']}[/bold cyan]")
-                print("Data:")
-                print(group_info['data'])
+                print("\n=== Detailed Group Data ===")
+                for group_info in groups_data:
+                    print(f"\n[bold cyan]Group: {group_info['name']}[/bold cyan]")
+                    print("Data:")
+                    print(group_info['data'])
 
     asyncio.run(f())
