@@ -2,10 +2,12 @@
 
 import asyncio
 import logging
+import sys
 from dataclasses import dataclass, fields
 from typing import Final, Type, TypedDict, TypeVar, assert_never
 
 import typer
+from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from serial import SerialException
 from smp.exceptions import SMPBadStartDelimiter
@@ -128,7 +130,9 @@ def get_smpclient(options: Options) -> SMPClient:
 async def connect_with_spinner(smpclient: SMPClient) -> None:
     """Spin while connecting to the SMP Server; raises `typer.Exit` if connection fails."""
     with Progress(
-        SpinnerColumn(), TextColumn("[progress.description]{task.description}")
+        SpinnerColumn(spinner_name="line"),
+        TextColumn("[progress.description]{task.description}"),
+        console=Console(force_terminal=sys.stdout.isatty()),
     ) as progress:
         connect_task_description = f"Connecting to {smpclient._address}..."
         connect_task = progress.add_task(description=connect_task_description, total=None)
@@ -156,7 +160,9 @@ async def smp_request(
     timeout_s: float | None = None,
 ) -> TRep | TEr1 | TEr2:
     with Progress(
-        SpinnerColumn(), TextColumn("[progress.description]{task.description}")
+        SpinnerColumn(spinner_name="line"),
+        TextColumn("[progress.description]{task.description}"),
+        console=Console(force_terminal=sys.stdout.isatty()),
     ) as progress:
         description = description or f"Waiting for response to {request.__class__.__name__}..."
         task = progress.add_task(description=description, total=None)

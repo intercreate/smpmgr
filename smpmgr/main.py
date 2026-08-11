@@ -265,9 +265,11 @@ def upgrade(
             image_states_response = await smp_request(
                 smpclient,
                 ImageStatesWrite(hash=image_hash, confirm=confirm),
-                "Marking uploaded image for permanent upgrade..."
-                if confirm
-                else "Marking uploaded image for test upgrade...",
+                (
+                    "Marking uploaded image for permanent upgrade..."
+                    if confirm
+                    else "Marking uploaded image for test upgrade..."
+                ),
             )
             if success(image_states_response):
                 pass
