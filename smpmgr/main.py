@@ -13,7 +13,7 @@ from rich import print
 from smp import error as smperr
 from smp.os_management import OS_MGMT_RET_RC
 from smpclient.generics import error, error_v1, error_v2, success
-from smpclient.mcuboot import IMAGE_TLV, ImageInfo, ImageTLVValue, TLVNotFound
+from smpclient.mcuboot import ImageInfo, ImageTLVValue
 from smpclient.requests.image_management import ImageStatesRead, ImageStatesWrite
 from smpclient.requests.os_management import ResetWrite
 from typing_extensions import Annotated, assert_never
@@ -36,7 +36,13 @@ from smpmgr.common import (
     get_smpclient,
     smp_request,
 )
-from smpmgr.image_management import ImageFormat, ImageFormatOption, upload_with_progress_bar
+from smpmgr.image_management import (
+    IMAGE_HASH_TLV_NAMES,
+    ImageFormat,
+    ImageFormatOption,
+    get_image_hash_tlv,
+    upload_with_progress_bar,
+)
 from smpmgr.logging import LogLevel, setup_logging
 from smpmgr.plugins import get_plugins
 from smpmgr.user import intercreate
@@ -195,7 +201,7 @@ def upgrade(
 ) -> None:
     """Upload a FW image, mark it for next boot, and reset the device."""
 
-    image_tlv_sha256: ImageTLVValue | None = None
+    image_hash_tlv: ImageTLVValue | None = None
 
     match format:
         case ImageFormat.MCUBOOT:
@@ -209,15 +215,13 @@ def upgrade(
                 )
                 raise typer.Exit(code=1)
 
-            try:
-                image_tlv_sha256 = image_info.get_tlv(IMAGE_TLV.SHA256)
-                logger.info(f"IMAGE_TLV_SHA256: {image_tlv_sha256}")
-            except TLVNotFound:
+            if (image_hash_tlv := get_image_hash_tlv(image_info)) is None:
                 typer.echo(
-                    "Could not find IMAGE_TLV_SHA256 in image. "
+                    f"Could not find an image hash TLV ({IMAGE_HASH_TLV_NAMES}) in image. "
                     "If this is not an MCUboot image, retry with --format=any."
                 )
                 raise typer.Exit(code=1)
+            logger.info(f"Image hash TLV: {image_hash_tlv}")
         case ImageFormat.ANY:
             pass
         case _ as unreachable:
@@ -236,8 +240,8 @@ def upgrade(
         if slot != 0 or confirm:
             match format:
                 case ImageFormat.MCUBOOT:
-                    assert image_tlv_sha256 is not None
-                    image_hash = image_tlv_sha256.value
+                    assert image_hash_tlv is not None
+                    image_hash = image_hash_tlv.value
                 case ImageFormat.ANY:
                     r = await smp_request(
                         smpclient, ImageStatesRead(), "Waiting for image states..."
