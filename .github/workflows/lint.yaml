@@ -11,6 +11,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
+        typer-version: ["0.24.0", "0.27.2"]
 
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +23,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - run: poetry install
+
+      - name: Select Typer compatibility endpoint
+        run: poetry run pip install "typer==${{ matrix.typer-version }}"
 
       - name: lint
         run: |
