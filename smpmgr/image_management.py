@@ -5,7 +5,7 @@ import logging
 from enum import StrEnum, unique
 from io import BufferedReader
 from pathlib import Path
-from typing import Annotated, TypeAlias, assert_never, cast
+from typing import Annotated, Final, TypeAlias, assert_never, cast
 
 import typer
 from rich import print
@@ -20,10 +20,12 @@ from rich.progress import (
 from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import error, success
-from smpclient.mcuboot import ImageInfo
+from smpclient.mcuboot import IMAGE_TLV, ImageInfo, ImageTLVValue, TLVNotFound
 from smpclient.requests.image_management import ImageErase, ImageStatesRead, ImageStatesWrite
 
 from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
+
+logger = logging.getLogger(__name__)
 
 
 @unique
@@ -51,8 +53,24 @@ ImageFormatOption: TypeAlias = Annotated[
 ]
 
 
+IMAGE_HASH_TLVS: Final = (IMAGE_TLV.SHA256, IMAGE_TLV.SHA384, IMAGE_TLV.SHA512)
+
+IMAGE_HASH_TLV_NAMES: Final = "/".join(tlv.name for tlv in IMAGE_HASH_TLVS)
+
+
+def _get_tlv_or_none(image_info: ImageInfo, tlv: IMAGE_TLV) -> ImageTLVValue | None:
+    try:
+        return image_info.get_tlv(tlv)
+    except TLVNotFound:
+        logger.info(f"{tlv.name} not found in image")
+        return None
+
+
+def get_image_hash_tlv(image_info: ImageInfo) -> ImageTLVValue | None:
+    return next(filter(None, (_get_tlv_or_none(image_info, tlv) for tlv in IMAGE_HASH_TLVS)), None)
+
+
 app = typer.Typer(name="image", help="The SMP Image Management Group.")
-logger = logging.getLogger(__name__)
 
 
 @app.command()
@@ -88,7 +106,7 @@ def state_write(
     hash: Annotated[
         str | None,
         typer.Argument(
-            help="SHA256 hash of the image to mark for test on next reboot. "
+            help="Hash of the image to mark for test on next reboot. "
             "MCUboot will temporarily swap to this image on the next reset. "
             "If the image boots successfully, use --confirm (or some other mechanism) to make it "
             "permanent (otherwise it will revert after another reset)."
