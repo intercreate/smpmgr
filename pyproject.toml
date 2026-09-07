@@ -32,6 +32,7 @@ format-jinja = "{% if distance == 0 %}{{ base }}{% if dirty %}+dirty{% endif %}{
 python = ">=3.11, <4"
 smpclient = { extras = ["all"], version = "==7.3.0" }
 typer = "==0.24.1"
+click = ">=8.2.1"
 readchar = "==4.2.1"
 
 [tool.poetry.group.dev.dependencies]
