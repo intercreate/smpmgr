@@ -21,7 +21,12 @@ from smp.exceptions import SMPBadStartDelimiter
 from smpclient import SMPClient
 from smpclient.generics import error, success
 from smpclient.mcuboot import IMAGE_TLV, ImageInfo, ImageTLVValue, TLVNotFound
-from smpclient.requests.image_management import ImageErase, ImageStatesRead, ImageStatesWrite
+from smpclient.requests.image_management import (
+    ImageErase,
+    ImageSlotInfoRead,
+    ImageStatesRead,
+    ImageStatesWrite,
+)
 
 from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
 
@@ -94,6 +99,29 @@ def state_read(ctx: typer.Context) -> None:
                 print(image)
             if r.splitStatus is not None:
                 print(f"splitStatus: {r.splitStatus}")
+        else:
+            raise Exception("Unreachable")
+
+    asyncio.run(f())
+
+
+@app.command()
+def slot_info(ctx: typer.Context) -> None:
+    """Request the images and slots that the application can see."""
+
+    options = cast(Options, ctx.obj)
+    smpclient = get_smpclient(options)
+
+    async def f() -> None:
+        await connect_with_spinner(smpclient)
+
+        r = await smp_request(smpclient, ImageSlotInfoRead(), "Waiting for slot info...")
+
+        if error(r):
+            print(r)
+        elif success(r):
+            for image in r.images:
+                print(image)
         else:
             raise Exception("Unreachable")
 
