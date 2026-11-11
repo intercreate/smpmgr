@@ -1,11 +1,15 @@
 """Common CLI helpers from rich, typer, click, etc."""
 
 import asyncio
+import io
 import logging
+import sys
 from dataclasses import dataclass, fields
 from typing import Final, Type, TypedDict, TypeVar, assert_never
 
 import typer
+from rich import get_console
+from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from serial import SerialException
 from smp.exceptions import SMPBadStartDelimiter
@@ -125,11 +129,25 @@ def get_smpclient(options: Options) -> SMPClient:
     return get_custom_smpclient(options, SMPClient)
 
 
+def replace_unencodable_output() -> None:
+    """Write `?` for what stdout and stderr cannot encode, rather than raising."""
+    for stream in (sys.stdout, sys.stderr):
+        if isinstance(stream, io.TextIOWrapper):
+            stream.reconfigure(errors="replace")
+
+
+def spinner_progress(console: Console) -> Progress:
+    """A spinner and description that the console can draw."""
+    return Progress(
+        SpinnerColumn("line" if console.legacy_windows or console.options.ascii_only else "dots"),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    )
+
+
 async def connect_with_spinner(smpclient: SMPClient) -> None:
     """Spin while connecting to the SMP Server; raises `typer.Exit` if connection fails."""
-    with Progress(
-        SpinnerColumn(), TextColumn("[progress.description]{task.description}")
-    ) as progress:
+    with spinner_progress(get_console()) as progress:
         connect_task_description = f"Connecting to {smpclient._address}..."
         connect_task = progress.add_task(description=connect_task_description, total=None)
         try:
@@ -155,9 +173,7 @@ async def smp_request(
     description: str | None = None,
     timeout_s: float | None = None,
 ) -> TRep | TEr1 | TEr2:
-    with Progress(
-        SpinnerColumn(), TextColumn("[progress.description]{task.description}")
-    ) as progress:
+    with spinner_progress(get_console()) as progress:
         description = description or f"Waiting for response to {request.__class__.__name__}..."
         task = progress.add_task(description=description, total=None)
         try:

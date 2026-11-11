@@ -34,6 +34,7 @@ from smpmgr.common import (
     TransportDefinition,
     connect_with_spinner,
     get_smpclient,
+    replace_unencodable_output,
     smp_request,
 )
 from smpmgr.image_management import (
@@ -139,6 +140,8 @@ def options(
         None, help="Path to plugin directory. May be used more than once."
     ),
 ) -> None:
+    replace_unencodable_output()
+
     if plugin_path:
         raise ValueError(
             "--plugin-path should have been removed from sys.argv by the get_plugins(sys.argv) "
