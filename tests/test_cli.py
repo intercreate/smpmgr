@@ -50,3 +50,11 @@ def test_global_options_parse_without_running_command(transport: tuple[str, str]
     )
 
     assert result.exit_code == 0, result.output
+
+
+def test_cp1252_output_replaces_what_it_cannot_encode() -> None:
+    result = CliRunner(charset="cp1252").invoke(app, ["--port", "/dev/☃", "os", "echo", "hi"])
+
+    assert isinstance(result.exception, SystemExit), result.exception
+    assert result.exit_code == 1
+    assert "Connecting to /dev/?..." in result.output

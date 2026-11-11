@@ -7,12 +7,11 @@ from pathlib import Path
 from typing import cast
 
 import typer
-from rich import print
+from rich import get_console, print
 from rich.progress import (
     BarColumn,
     DownloadColumn,
     Progress,
-    SpinnerColumn,
     TextColumn,
     TimeRemainingColumn,
     TransferSpeedColumn,
@@ -27,7 +26,13 @@ from smpclient.requests.file_management import (
 )
 from typing_extensions import Annotated
 
-from smpmgr.common import Options, connect_with_spinner, get_smpclient, smp_request
+from smpmgr.common import (
+    Options,
+    connect_with_spinner,
+    get_smpclient,
+    smp_request,
+    spinner_progress,
+)
 
 app = typer.Typer(name="file", help="The SMP File Management Group.")
 logger = logging.getLogger(__name__)
@@ -175,9 +180,7 @@ def download(
     async def f() -> None:
         await connect_with_spinner(smpclient)
 
-        with Progress(
-            SpinnerColumn(), TextColumn("[progress.description]{task.description}")
-        ) as progress:
+        with spinner_progress(get_console()) as progress:
             download_task = progress.add_task(description=f"Downloading {file}", total=None)
             file_data = await smpclient.download_file(file)
             progress.update(download_task, description=f"Downloaded {file}", completed=True)
