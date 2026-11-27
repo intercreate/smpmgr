@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from collections.abc import Sequence
 from enum import StrEnum, unique
 from io import BufferedReader
 from pathlib import Path
@@ -18,6 +19,7 @@ from rich.progress import (
     TransferSpeedColumn,
 )
 from smp.exceptions import SMPBadStartDelimiter
+from smp.image_management import ImageState
 from smpclient import SMPClient
 from smpclient.generics import error, success
 from smpclient.mcuboot import IMAGE_TLV, ImageInfo, ImageTLVValue, TLVNotFound
@@ -73,6 +75,35 @@ def _get_tlv_or_none(image_info: ImageInfo, tlv: IMAGE_TLV) -> ImageTLVValue | N
 
 def get_image_hash_tlv(image_info: ImageInfo) -> ImageTLVValue | None:
     return next(filter(None, (_get_tlv_or_none(image_info, tlv) for tlv in IMAGE_HASH_TLVS)), None)
+
+
+def needs_test_mark(images: Sequence[ImageState], image_hash: bytes, slot: int) -> bool:
+    """Whether `upgrade` must mark the uploaded image for a test before the reset.
+
+    An application's SMP server reports the image it runs as active, and writes an upload to a slot
+    that isn't running, whatever `slot` says. MCUboot then boots that image only if it's marked: in
+    direct-XIP with revert, it even erases an unmarked image with a higher version as faulty. So
+    with an active image, the upload is marked unless it is the running image itself.
+
+    MCUboot's serial recovery reports no active image, and with `slot` 0 it writes the image that
+    boots next, which needs no mark. Without an active image, or when the upload isn't found among
+    the images, `slot` decides, as before.
+
+    Args:
+        images: The image states read after the upload.
+        image_hash: The uploaded image's hash, from its MCUboot hash TLV.
+        slot: The `--slot` the image was uploaded with.
+
+    Returns:
+        True to mark the uploaded image for a test.
+    """
+
+    if any(image.active for image in images):
+        uploaded = next((image for image in images if image.hash == image_hash), None)
+        if uploaded is not None:
+            return not uploaded.active
+
+    return slot != 0
 
 
 app = typer.Typer(name="image", help="The SMP Image Management Group.")

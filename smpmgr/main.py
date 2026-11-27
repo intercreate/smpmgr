@@ -42,6 +42,7 @@ from smpmgr.image_management import (
     ImageFormat,
     ImageFormatOption,
     get_image_hash_tlv,
+    needs_test_mark,
     upload_with_progress_bar,
 )
 from smpmgr.logging import LogLevel, setup_logging
@@ -240,7 +241,18 @@ def upgrade(
         with open(file, "rb") as f:
             await upload_with_progress_bar(smpclient, f, slot)
 
-        if slot != 0 or confirm:
+        mark = slot != 0 or confirm
+        if format == ImageFormat.MCUBOOT and not confirm:
+            assert image_hash_tlv is not None
+            states = await smp_request(smpclient, ImageStatesRead(), "Waiting for image states...")
+            if success(states):
+                mark = needs_test_mark(states.images, image_hash_tlv.value, slot)
+            elif error(states):
+                logger.info(f"No image states, deciding by --slot: {states}")
+            else:
+                assert_never(states)
+
+        if mark:
             match format:
                 case ImageFormat.MCUBOOT:
                     assert image_hash_tlv is not None
@@ -303,7 +315,7 @@ def upgrade(
 
         print("Upgrade complete.")
 
-        if slot != 0:
+        if mark:
             print("The device may take a few minutes to complete FW swap.")
 
     asyncio.run(f())
